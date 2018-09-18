@@ -5,43 +5,125 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using DotNetCore.Contracts;
+using System;
 
 namespace DotNetCore.UnitTests
 {
     [TestClass]
     public class ArticleServiceTests : BaseUnitTest
     {
-        ArticleService articleService;
+        IArticleService articleService;
 
         [TestInitialize]
         public void OnTestInitialize()
         {
-            articleService = new ArticleService(CreateBlogDbContext());
+            articleService = CreateArticleService();
+            articleService.Create<Article>(GetArticleList(), true);
         }
 
         [TestCleanup]
-        public void OnTestCleanup() { }
+        public void OnTestCleanup()
+        {
+            articleService.DbContext.Database.EnsureDeleted();
+        }
 
+        private static ArticleService CreateArticleService()
+        {
+            return new ArticleService(CreateBlogDbContext());
+        }
+
+        private static List<Article> GetArticleList()
+        {
+            return new List<Article>()
+            {
+                new Article() {
+                    Title = "Title1",
+                    Body = "Body1",
+                    IsPublished = false,
+                    PublishDate = null
+                },
+                new Article() {
+                    Title = "Title2",
+                    Body = "Body2",
+                    IsPublished = false,
+                    PublishDate = null
+                }
+            };
+        }
 
         [TestMethod]
         public void CreateArticle_should_add_article_to_database()
         {
-            var blogDbContext = CreateBlogDbContext();
-
-            blogDbContext.Articles.Add(new Article()
+            articleService.Create(new Article()
             {
                 Title = "Title",
                 Body = "Body",
                 IsPublished = false,
                 PublishDate = null
-            });
+            }, true);
 
-            blogDbContext.SaveChanges();
+            IArticleService tmpArticleService = CreateArticleService();
 
-            using (IBlogDbContext x = CreateBlogDbContext())
+            Assert.IsTrue(tmpArticleService.DbContext.Set<Article>().Count() == 1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void PublishArticle_should_throw_exception_when_invalid_article_id_is_provided()
+        {
+            articleService.PublishArticle(int.MinValue);
+        }
+
+        [TestMethod]
+        public void PublishArticle_should_update_publish_date_and_is_published_fields()
+        {
+            var article = new Article()
             {
-                Assert.IsTrue(blogDbContext.Articles.Count() == 1);
-            }
+                Title = "Title",
+                Body = "Body",
+                IsPublished = false,
+                PublishDate = null
+            };
+
+            articleService.Create(article, true);
+
+            articleService.PublishArticle(article.Id);
+
+            var updatedArticle = articleService.DbContext.GetById<Article>(article.Id);
+
+            Assert.AreEqual(DateTime.UtcNow.Date , updatedArticle.PublishDate.Value.Date);
+            Assert.AreEqual(true, updatedArticle.IsPublished);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void UnPublishArticle_should_throw_exception_when_invalid_article_id_is_provided()
+        {
+            articleService.UnPublishArticle(int.MinValue);
+        }
+
+        [TestMethod]
+        public void UnPublishArticle_should_update_publish_date_and_is_published_fields()
+        {
+            var article = new Article()
+            {
+                Title = "Title",
+                Body = "Body",
+                IsPublished = false,
+                PublishDate = null
+            };
+
+            articleService.Create(article, true);
+
+            articleService.PublishArticle(article.Id);
+
+            articleService.UnPublishArticle(article.Id);
+
+            var updatedArticle = articleService.DbContext.GetById<Article>(article.Id);
+
+            Assert.AreEqual(null, updatedArticle.PublishDate);
+            Assert.AreEqual(false, updatedArticle.IsPublished);
         }
     }
 }

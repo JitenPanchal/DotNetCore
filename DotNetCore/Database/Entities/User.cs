@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DotNetCore.Database.Entities
 {
-    public class User : BaseEntity
+    public class User : AuditableEntity
     {
         public string Name { get; set; }
         public string Email { get; set; }
@@ -18,5 +18,7 @@ namespace DotNetCore.Database.Entities
         public string Token { get; set; }
         public int ExpiresIn { get; set; }
         public UserType UserType { get; set; }
+
+        public IList<ArticleFeedback> ArticleFeedbacks { get; set; }
     }
 }

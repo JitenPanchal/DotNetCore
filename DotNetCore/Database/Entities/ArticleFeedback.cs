@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DotNetCore.Database.Entities
 {
-    public class ArticleFeedback : BaseEntity
+    public class ArticleFeedback : AuditableEntity
     {
         public int ArticleId { get; set; }
         public string Comments { get; set; }
@@ -18,5 +18,6 @@ namespace DotNetCore.Database.Entities
         public int FeedbackCount { get; set; }
 
         public Article Article { get; set; }
+        public User User { get; set; }
     }
 }

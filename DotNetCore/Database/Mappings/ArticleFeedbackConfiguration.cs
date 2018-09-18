@@ -20,7 +20,8 @@ namespace DotNetCore.Database.Mappings
             builder.Property(x => x.CommentDate).HasColumnName(@"CommentDate").HasColumnType("datetime").IsRequired(false);
             builder.Property(x => x.FeedbackCount).HasColumnName(@"FeedbackCount").HasColumnType("int");
 
-            builder.HasOne(x => x.Article).WithMany(x=>x.ArticleFeedbacks).IsRequired();
+            builder.HasOne(x => x.Article).WithMany(x => x.ArticleFeedbacks).IsRequired();
+            builder.HasOne(x => x.User).WithMany(x => x.ArticleFeedbacks).OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -9,6 +11,8 @@ namespace DotNetCore.Database
 {
     public interface IDbContext
     {
+        DatabaseFacade Database { get; }
+
         Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default(CancellationToken));
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken));
@@ -26,6 +30,8 @@ namespace DotNetCore.Database
         IQueryable<TEntity> GetPagedQuery<TEntity, TKey>(int pageNumber, int pageSize, Expression<Func<TEntity, TKey>> orderBy, bool readOnly = true) where TEntity : BaseEntity;
 
         bool IsValidEntityId<TEntity>(int id, bool throwExceptionOnEntityNotFound = false) where TEntity : BaseEntity;
+
+        DbSet<TEntity> Set<TEntity>() where TEntity : class;
 
         int SaveChanges(bool acceptAllChangesOnSuccess);
 
