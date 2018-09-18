@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetCore", "DotNetCore\Do
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetCore.UnitTests", "DotNetCore.UnitTests\DotNetCore.UnitTests.csproj", "{6CA498E9-BC23-4C64-BFD0-B17F6D459666}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetCore.IntegrationTests", "DotNetCore.IntegrationTests\DotNetCore.IntegrationTests.csproj", "{8FC3A67A-E544-412F-92F4-6CD6C3F4A64F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6CA498E9-BC23-4C64-BFD0-B17F6D459666}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CA498E9-BC23-4C64-BFD0-B17F6D459666}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CA498E9-BC23-4C64-BFD0-B17F6D459666}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FC3A67A-E544-412F-92F4-6CD6C3F4A64F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FC3A67A-E544-412F-92F4-6CD6C3F4A64F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FC3A67A-E544-412F-92F4-6CD6C3F4A64F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FC3A67A-E544-412F-92F4-6CD6C3F4A64F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

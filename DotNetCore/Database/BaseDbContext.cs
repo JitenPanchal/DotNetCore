@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using DotNetCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 namespace DotNetCore.Database
 {
     public abstract class BaseDbContext : DbContext, IDbContext, IDisposable
     {
-        public BaseDbContext(DbContextOptions<DbContext> options) : base(options)
-        {
-        }
+        public BaseDbContext(DbContextOptions<DbContext> options) : base(options) {}
 
         public virtual async Task<TEntity> GetByIdAsync<TEntity>(int id, bool readOnly = true, bool throwExceptionOnEntityNotFound = false) where TEntity : BaseEntity
         {
@@ -51,15 +52,6 @@ namespace DotNetCore.Database
             return readOnly ? query.AsNoTracking() : query;
         }
 
-        //TODO
-        //protected override DbEntityValidationResult ValidateEntity(DbEntityEntry entityEntry, IDictionary<object, object> items)
-        //{
-        //    items.Add(new KeyValuePair<object, object>(ValidationContextKeys.DbEntityEntry, entityEntry));
-        //    items.Add(new KeyValuePair<object, object>(ValidationContextKeys.DbContext, this));
-
-        //    return base.ValidateEntity(entityEntry, items);
-        //}
-
         public virtual IQueryable<TEntity> GetPagedQuery<TEntity>(int pageNumber, int pageSize, bool readOnly = true) where TEntity : BaseEntity
         {
             return GetPagedQuery<TEntity, int>(pageNumber, pageSize, it => it.Id, readOnly);
@@ -84,26 +76,35 @@ namespace DotNetCore.Database
 
         public override int SaveChanges()
         {
-            //TODO
-            //OnBeforeSaveChanges();
+            OnBeforeSaveChanges();
             return base.SaveChanges();
         }
 
-        //TODO
-        //public override Task<int> SaveChangesAsync(CancellationToken cancellationToken)
-        //{
-        //    OnBeforeSaveChanges();
-        //    return base.SaveChangesAsync(cancellationToken);
-        //}
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            OnBeforeSaveChanges();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
 
-        //TODO
-        //private void OnBeforeSaveChanges()
-        //{
-        //    foreach (var entityEntry in ChangeTracker.Entries())
-        //    {
-        //        (entityEntry.Entity as BaseEntity).OnBeforeSaveEntity(entityEntry);
-        //    }
-        //}
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            OnBeforeSaveChanges();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            OnBeforeSaveChanges();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void OnBeforeSaveChanges()
+        {
+            foreach (var entityEntry in ChangeTracker.Entries())
+            {
+                (entityEntry.Entity as BaseEntity).OnBeforeSaveEntity(entityEntry);
+            }
+        }
 
         protected virtual IQueryable<TEntity> GetQueryable<TEntity>(
           Expression<Func<TEntity, bool>> filter = null,
@@ -121,8 +122,7 @@ namespace DotNetCore.Database
                 query = query.Where(filter);
             }
 
-            foreach (var includeProperty in includeProperties.Split
-                (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 query = query.Include(includeProperty);
             }

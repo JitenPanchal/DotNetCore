@@ -13,6 +13,10 @@ namespace DotNetCore.Database
     {
         DatabaseFacade Database { get; }
 
+        int SaveChanges();
+
+        int SaveChanges(bool acceptAllChangesOnSuccess);
+
         Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default(CancellationToken));
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken));
@@ -32,10 +36,6 @@ namespace DotNetCore.Database
         bool IsValidEntityId<TEntity>(int id, bool throwExceptionOnEntityNotFound = false) where TEntity : BaseEntity;
 
         DbSet<TEntity> Set<TEntity>() where TEntity : class;
-
-        int SaveChanges(bool acceptAllChangesOnSuccess);
-
-        int SaveChanges();
 
         IEnumerable<TEntity> GetAll<TEntity>(
           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,

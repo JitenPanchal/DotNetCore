@@ -1,6 +1,7 @@
 ﻿using DotNetCore.Database.Entities;
 using DotNetCore.Database.Mappings;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -16,14 +17,14 @@ namespace DotNetCore.Database
         public DbSet<Article> Articles { get; set; }
         public DbSet<ArticleFeedback> ArticleFeedbacks { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                // TODO 
-                base.OnConfiguring(optionsBuilder);
-            }
-        }
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
+        //    if (!optionsBuilder.IsConfigured)
+        //    {
+        //        IConfigurationRoot configuration = new ConfigurationBuilder().SetBasePath(AppDomain.CurrentDomain.BaseDirectory).AddJsonFile("appsettings.json").Build();
+        //        optionsBuilder.UseSqlServer(configuration.GetConnectionString("BloggingDatabase"));
+        //    }
+        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -53,7 +54,7 @@ namespace DotNetCore.Database
                 }
             }
 
-            base.OnModelCreating(modelBuilder);
+            //base.OnModelCreating(modelBuilder);
         }
     }
 }
