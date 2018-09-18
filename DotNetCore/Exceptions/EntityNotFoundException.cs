@@ -7,11 +7,15 @@ namespace DotNetCore.Exceptions
     {
         const string errorMessageWithId = "Entity not found for id: {0}";
 
+        const string errorMessageWithEntityAndId = "{0} Entity not found for id: {1}";
+
         const string errorMessage = "Entity not found";
 
         public EntityNotFoundException() : this(errorMessage) { }
 
         public EntityNotFoundException(int id) : this(string.Format(errorMessageWithId, id)) { }
+
+        public EntityNotFoundException(Type entityType, int id) : this(string.Format(errorMessageWithEntityAndId, entityType, id)) { }
 
         public EntityNotFoundException(string message) : base(message) { }
 

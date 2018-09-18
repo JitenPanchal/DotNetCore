@@ -10,11 +10,11 @@ namespace DotNetCore.UnitTests
 {
     public abstract class BaseUnitTest
     {
-        protected static IBlogDbContext CreateBlogDbContext()
+        protected static IBlogDbContext CreateInMemoryBlogDbContext()
         {
             var dbContextOptionsBuilder = new DbContextOptionsBuilder<DbContext>();
 
-            dbContextOptionsBuilder.UseInMemoryDatabase(Constants.Database.BlogContextDbName, null);
+            dbContextOptionsBuilder.UseInMemoryDatabase(nameof(BlogDbContext), null);
 
             return new BlogDbContext(dbContextOptionsBuilder.Options);
         }

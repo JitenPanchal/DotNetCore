@@ -18,5 +18,7 @@ namespace DotNetCore.Contracts
         IQueryable<ArticleFeedback> GetArticleFeeback(int articleId, int userId);
 
         void SaveArticleComments(int articleId, int userId, string comments);
+
+        int MaxArticleFeedbackAttempts { get; }
     }
 }

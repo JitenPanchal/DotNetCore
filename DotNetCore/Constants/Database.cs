@@ -7,7 +7,6 @@ namespace DotNetCore.Constants
 {
     public static class Database
     {
-        public const string BlogContextDbName = "BlogDatabase";
         public const string SchemaName = "dbo";
     }
 }

@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using DotNetCore.Contracts;
 using System;
+using DotNetCore.Exceptions;
+using DotNetCore.Enums;
 
 namespace DotNetCore.UnitTests
 {
@@ -14,26 +16,30 @@ namespace DotNetCore.UnitTests
     public class ArticleServiceTests : BaseUnitTest
     {
         IArticleService articleService;
+        IBlogDbContext blogDbContext;
 
         [TestInitialize]
         public void OnTestInitialize()
         {
-            articleService = CreateArticleService();
-            articleService.Create<Article>(GetArticleList(), true);
+            blogDbContext = CreateInMemoryBlogDbContext();
+
+            blogDbContext.Create(GetArticleList(), true);
+            blogDbContext.Create(GetUserList(), true);
+
+            articleService = new ArticleService(blogDbContext);
         }
 
         [TestCleanup]
         public void OnTestCleanup()
         {
-            articleService.DbContext.Database.EnsureDeleted();
+            blogDbContext.Database.EnsureDeleted();
+            blogDbContext.Dispose();
+            articleService = null;
         }
 
-        private static ArticleService CreateArticleService()
-        {
-            return new ArticleService(CreateBlogDbContext());
-        }
+        #region Helpers
 
-        private static List<Article> GetArticleList()
+        private static IList<Article> GetArticleList()
         {
             return new List<Article>()
             {
@@ -52,21 +58,27 @@ namespace DotNetCore.UnitTests
             };
         }
 
-        [TestMethod]
-        public void CreateArticle_should_add_article_to_database()
+        private static IList<User> GetUserList()
         {
-            articleService.Create(new Article()
+            return new List<User>()
             {
-                Title = "Title",
-                Body = "Body",
-                IsPublished = false,
-                PublishDate = null
-            }, true);
+                new User() {
+                    Name = "test_user_1",
+                    Email = "test_user_1@gmail.com",
+                    UserType = UserType.Employee
 
-            IArticleService tmpArticleService = CreateArticleService();
-
-            Assert.IsTrue(tmpArticleService.DbContext.Set<Article>().Count() == 1);
+                },
+                new User() {
+                    Name = "test_user_2",
+                    Email = "test_user_2@gmail.com",
+                    UserType = UserType.Publisher,
+                }
+            };
         }
+
+        #endregion
+
+        #region Publish Article
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
@@ -78,23 +90,19 @@ namespace DotNetCore.UnitTests
         [TestMethod]
         public void PublishArticle_should_update_publish_date_and_is_published_fields()
         {
-            var article = new Article()
-            {
-                Title = "Title",
-                Body = "Body",
-                IsPublished = false,
-                PublishDate = null
-            };
-
-            articleService.Create(article, true);
+            var article = blogDbContext.Set<Article>().FirstOrDefault();
 
             articleService.PublishArticle(article.Id);
 
-            var updatedArticle = articleService.DbContext.GetById<Article>(article.Id);
+            var updatedArticle = blogDbContext.GetById<Article>(article.Id);
 
-            Assert.AreEqual(DateTime.UtcNow.Date , updatedArticle.PublishDate.Value.Date);
+            Assert.AreEqual(DateTime.UtcNow.Date, updatedArticle.PublishDate.Value.Date);
             Assert.AreEqual(true, updatedArticle.IsPublished);
         }
+
+        #endregion
+
+        #region UnPublish Article
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
@@ -106,24 +114,159 @@ namespace DotNetCore.UnitTests
         [TestMethod]
         public void UnPublishArticle_should_update_publish_date_and_is_published_fields()
         {
-            var article = new Article()
-            {
-                Title = "Title",
-                Body = "Body",
-                IsPublished = false,
-                PublishDate = null
-            };
-
-            articleService.Create(article, true);
+            var article = blogDbContext.Set<Article>().First();
 
             articleService.PublishArticle(article.Id);
 
             articleService.UnPublishArticle(article.Id);
 
-            var updatedArticle = articleService.DbContext.GetById<Article>(article.Id);
+            var updatedArticle = blogDbContext.GetById<Article>(article.Id);
 
             Assert.AreEqual(null, updatedArticle.PublishDate);
             Assert.AreEqual(false, updatedArticle.IsPublished);
         }
+
+        #endregion
+
+        #region SaveArticleFeedback Validate Parameters
+
+        [TestMethod]
+        [ExpectedException(typeof(EntityNotFoundException))]
+        public void SaveArticleFeedback_Should_Throw_EntityNotFoundException_If_Article_Is_Not_Found()
+        {
+            articleService.SaveArticleFeedback(int.MaxValue, 1, ArticleStatus.Like);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleFeedback_Should_Throw_ArgumentException_If_Article_Id_Is_Not_Valid()
+        {
+            articleService.SaveArticleFeedback(-1, 1, ArticleStatus.Like);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(EntityNotFoundException))]
+        public void SaveArticleFeedback_Should_Throw_EntityNotFoundException_If_User_Is_Not_Found()
+        {
+            articleService.SaveArticleFeedback(1, int.MaxValue, ArticleStatus.Like);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleFeedback_Should_Throw_ArgumentException_If_UserId_Id_Is_Not_Valid()
+        {
+            articleService.SaveArticleFeedback(1, -1, ArticleStatus.Like);
+        }
+
+        #endregion
+
+        #region SaveArticleFeedback 
+
+        [TestMethod]
+        public void SaveArticleFeedback_Should_Add_Feedback_Entry()
+        {
+            var article = blogDbContext.Set<Article>().AsNoTracking().FirstOrDefault();
+            var user = blogDbContext.Set<User>().AsNoTracking().FirstOrDefault();
+
+            articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
+
+            var articleFeedback = articleService.GetArticleFeeback(article.Id, user.Id).FirstOrDefault();
+
+            Assert.IsNotNull(articleFeedback);
+            Assert.IsTrue(articleFeedback.FeedbackCount == 1);
+            Assert.IsTrue(articleFeedback.ArticleId == article.Id);
+            Assert.IsTrue(articleFeedback.UserId == user.Id);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidOperationException))]
+        public void SaveArticleFeedback_Should_Throw_Exception_On_Exceeding_Max_Attempts()
+        {
+            var article = blogDbContext.Set<Article>().FirstOrDefault();
+            var user = blogDbContext.Set<User>().FirstOrDefault();
+
+            for (int i = 0; i <= articleService.MaxArticleFeedbackAttempts; i++)
+            {
+                articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
+            }
+        }
+
+        #endregion
+
+        #region SaveArticleComments Validate Parameters
+
+        [TestMethod]
+        [ExpectedException(typeof(EntityNotFoundException))]
+        public void SaveArticleComments_Should_Throw_EntityNotFoundException_If_Article_Is_Not_Found()
+        {
+            articleService.SaveArticleComments(int.MaxValue, 1, "Like it ?");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleComments_Should_Throw_ArgumentException_If_Article_Id_Is_Not_Valid()
+        {
+            articleService.SaveArticleComments(-1, 1, "Like it ?");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(EntityNotFoundException))]
+        public void SaveArticleComments_Should_Throw_EntityNotFoundException_If_User_Is_Not_Found()
+        {
+            articleService.SaveArticleComments(1, int.MaxValue, "Like it ?");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleComments_Should_Throw_ArgumentException_If_UserId_Id_Is_Not_Valid()
+        {
+            articleService.SaveArticleComments(1, -1, "Like it ?");
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleComments_Should_Throw_ArgumentException_If_Comments_Is_Null()
+        {
+            articleService.SaveArticleComments(1, -1, null);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleComments_Should_Throw_ArgumentException_If_Comments_Is_Empty()
+        {
+            articleService.SaveArticleComments(1, -1, string.Empty);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void SaveArticleComments_Should_Throw_ArgumentException_If_Comments_Is_Contains_Only_WhiteSpace()
+        {
+            articleService.SaveArticleComments(1, -1, "              ");
+        }
+
+        #endregion
+
+        #region SaveArticleComments
+
+        [TestMethod]
+        public void SaveArticleComments_Should_Save_Comments_And_Set_CommentsDate()
+        {
+            var comments = "didn't like it";
+
+            var article = blogDbContext.Set<Article>().AsNoTracking().FirstOrDefault();
+            var user = blogDbContext.Set<User>().AsNoTracking().FirstOrDefault();
+
+            articleService.SaveArticleComments(article.Id, user.Id, comments);
+
+            var articleFeedback = articleService.GetArticleFeeback(article.Id, user.Id).FirstOrDefault();
+
+            Assert.IsNotNull(articleFeedback);
+            Assert.IsTrue(articleFeedback.Comments == comments);
+            Assert.IsTrue(articleFeedback.CommentDate.HasValue);
+            Assert.IsTrue(articleFeedback.ArticleId == article.Id);
+            Assert.IsTrue(articleFeedback.UserId == user.Id);
+        }
+
+        #endregion
     }
 }

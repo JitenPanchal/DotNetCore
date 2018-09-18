@@ -7,7 +7,7 @@ namespace DotNetCore.Enums
 {
     public enum UserType
     {
-        Employer = 0,
+        Employee = 0,
         Publisher = 1,
     }
 }

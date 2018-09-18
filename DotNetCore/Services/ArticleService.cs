@@ -13,16 +13,19 @@ namespace DotNetCore.Services
 {
     public class ArticleService : BaseService, IArticleService
     {
-        const int MaxArticleFeedbackAttempts = 3;
+        const int maxArticleFeedbackAttempts = 3;
 
         #region Error Messages
 
         const string InvalidArticleFeedbackOperation = "User has exceeded max feedback attempts";
+        private IBlogDbContext blogDbContext;
 
         #endregion
 
-        public ArticleService(IBlogDbContext blogDbContext) : base(blogDbContext)
-        {
+        public int MaxArticleFeedbackAttempts => maxArticleFeedbackAttempts;
+
+        public ArticleService(IBlogDbContext blogDbContext) {
+            this.blogDbContext = blogDbContext;
         }
 
         public virtual void PublishArticle(int articleId, bool saveChanges = false)
@@ -30,12 +33,12 @@ namespace DotNetCore.Services
             if (articleId <= 0)
                 throw new ArgumentException(nameof(articleId));
 
-            var article = DbContext.GetById<Article>(articleId, false, true);
+            var article = blogDbContext.GetById<Article>(articleId, false, true);
 
             article.PublishDate = (DateTime?)DateTime.UtcNow;
             article.IsPublished = true;
 
-            Update(article, saveChanges);
+            blogDbContext.Update(article, saveChanges);
         }
 
         public virtual void UnPublishArticle(int articleId, bool saveChanges = true)
@@ -43,12 +46,12 @@ namespace DotNetCore.Services
             if (articleId <= 0)
                 throw new ArgumentException(nameof(articleId));
 
-            var article = DbContext.GetById<Article>(articleId, false, true);
+            var article = blogDbContext.GetById<Article>(articleId, false, true);
 
             article.PublishDate = null;
             article.IsPublished = false;
 
-            Update(article, saveChanges);
+            blogDbContext.Update(article, saveChanges);
         }
 
         public virtual void SaveArticleFeedback(int articleId, int userId, ArticleStatus articleStatus)
@@ -60,21 +63,22 @@ namespace DotNetCore.Services
                 throw new ArgumentException(nameof(userId));
 
             // validate article
-            var article = DbContext.GetById<Article>(articleId, false, true);
+            var article = blogDbContext.GetById<Article>(articleId, throwExceptionOnEntityNotFound: true);
 
             // validate user
-            var user = DbContext.GetById<User>(userId, false, true);
+            var user = blogDbContext.GetById<User>(userId, throwExceptionOnEntityNotFound: true);
 
-            var articleFeedback = (GetArticleFeeback(articleId, userId)).FirstOrDefault();
+            var articleFeedback = SetArticleFeedbackFields(articleStatus, article, user);
 
-            articleFeedback = SetArticleFeedbackFields(articleStatus, article, user, articleFeedback);
-
-            DbContext.SaveChanges();
+            if (articleFeedback.Id <= 0)
+                blogDbContext.Create(articleFeedback, true);
+            else
+                blogDbContext.Update(articleFeedback, true);
         }
 
         public virtual IQueryable<ArticleFeedback> GetArticleFeeback(int articleId, int userId)
         {
-            return from item in DbContext.Set<ArticleFeedback>()
+            return from item in blogDbContext.Set<ArticleFeedback>()
                    where item.ArticleId == articleId && item.UserId == userId
                    select item;
         }
@@ -91,29 +95,29 @@ namespace DotNetCore.Services
                 throw new ArgumentException(nameof(comments));
 
             // validate article
-            var article = DbContext.GetById<Article>(articleId, false, true);
+            var article = blogDbContext.GetById<Article>(articleId, false, true);
 
             // validate user
-            var user = DbContext.GetById<User>(userId, false, true);
+            var user = blogDbContext.GetById<User>(userId, false, true);
 
             var articleFeedback = (GetArticleFeeback(articleId, userId)).FirstOrDefault();
 
             articleFeedback = SetArticleCommentsFields(comments, article, user, articleFeedback);
 
-            DbContext.SaveChanges();
+            blogDbContext.SaveChanges();
         }
 
         public virtual IQueryable<ArticleMostLiked> GetArticleMostLikedQuery()
         {
-            var countQuery = (from it in DbContext.Set<ArticleFeedback>()
+            var countQuery = (from it in blogDbContext.Set<ArticleFeedback>()
                               group it by it.ArticleId
                              into g
                               orderby g.Count() descending
                               select new { ArticleId = g.Key, Count = g.Count() }).Take(1);
 
-            var query = from it in DbContext.Set<Article>().AsNoTracking()
+            var query = from it in blogDbContext.Set<Article>().AsNoTracking()
                         join tmp in countQuery on it.Id equals tmp.ArticleId
-                        join user in DbContext.Set<User>().AsNoTracking() on it.AddedByUserId equals user.Id
+                        join user in blogDbContext.Set<User>().AsNoTracking() on it.AddedByUserId equals user.Id
                         select new ArticleMostLiked()
                         {
                             Id = it.Id,
@@ -203,7 +207,7 @@ namespace DotNetCore.Services
 
 
             var query =
-                from item in DbContext.Set<Article>()
+                from item in blogDbContext.Set<Article>()
                 join statLikeItem in countLikeQuery on item.Id equals statLikeItem.ArticleId into likeTemp
                 join statUnLikeItem in countUnLikeQuery on item.Id equals statUnLikeItem.ArticleId into unLikeTemp
                 join statNoneItem in countNoneQuery on item.Id equals statNoneItem.ArticleId into noneTemp
@@ -228,7 +232,7 @@ namespace DotNetCore.Services
 
         public virtual IQueryable<ArticleFeedback> GetArticleStatQuery(ArticleStatus status)
         {
-            var query = from it in DbContext.Set<ArticleFeedback>()
+            var query = from it in blogDbContext.Set<ArticleFeedback>()
                         where it.Status == status
                         select it;
             return query;
@@ -236,13 +240,9 @@ namespace DotNetCore.Services
 
         #region Helpers
 
-        private ArticleFeedback SetArticleFeedbackFields(ArticleStatus articleStatus, Article article, User user, ArticleFeedback articleFeedback)
+        private ArticleFeedback SetArticleFeedbackFields(ArticleStatus articleStatus, Article article, User user)
         {
-            if (articleFeedback == null)
-            {
-                articleFeedback = new ArticleFeedback();
-                DbContext.Set<ArticleFeedback>().Add(articleFeedback);
-            }
+            var articleFeedback = GetArticleFeeback(article.Id, user.Id).FirstOrDefault() ?? new ArticleFeedback();
 
             articleFeedback.FeedbackCount++;
 
@@ -250,8 +250,8 @@ namespace DotNetCore.Services
             if (articleFeedback.FeedbackCount > MaxArticleFeedbackAttempts)
                 throw new InvalidOperationException(InvalidArticleFeedbackOperation);
 
-            articleFeedback.Article = article;
-            articleFeedback.User = user;
+            articleFeedback.ArticleId = article.Id;
+            articleFeedback.UserId = user.Id;
             articleFeedback.Status = articleStatus;
             articleFeedback.FeedbackDate = DateTime.UtcNow;
 
@@ -269,7 +269,7 @@ namespace DotNetCore.Services
             if (articleFeedback == null)
             {
                 articleFeedback = new ArticleFeedback();
-                DbContext.Set<ArticleFeedback>().Add(articleFeedback);
+                blogDbContext.Set<ArticleFeedback>().Add(articleFeedback);
             }
 
             articleFeedback.Article = article;
