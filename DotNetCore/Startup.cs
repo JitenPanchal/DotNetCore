@@ -1,22 +1,72 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
 using DotNetCore.Contracts;
+using DotNetCore.Database;
+using DotNetCore.Infrastructure.Filters;
 using DotNetCore.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace DotNetCore
 {
     public class Startup
     {
+        private readonly IConfigurationRoot configuration;
+
+        private static readonly ILoggerFactory loggerFactory = new LoggerFactory()
+          .AddDebug((categoryName, logLevel) => (logLevel == LogLevel.Information) && (categoryName == DbLoggerCategory.Database.Command.Name))
+          .AddConsole((categoryName, logLevel) => (logLevel == LogLevel.Information) && (categoryName == DbLoggerCategory.Database.Command.Name));
+
+        public Startup(IHostingEnvironment env)
+        {
+            var builder = new ConfigurationBuilder().SetBasePath(env.ContentRootPath).AddJsonFile("appSettings.json", optional: false, reloadOnChange: true);
+            configuration = builder.Build();
+        }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            var serviceProvider = services.BuildServiceProvider();
+            var env = serviceProvider.GetService<IHostingEnvironment>();
+
+            var mvcOptions = services.AddMvc();
+
+            mvcOptions.AddJsonOptions((serializerSettings) =>
+            {
+                if (serializerSettings.SerializerSettings.ContractResolver != null)
+                {
+                    if (!env.IsDevelopment())
+                    {
+                        serializerSettings.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.None;
+                    }
+                }
+            });
+
+            mvcOptions.AddMvcOptions((outputFormatters) =>
+            {
+                outputFormatters.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+            });
+
+            services.AddMvc((options) =>
+            {
+                // TODO - Authorization ??
+                //options.Filters.Add(typeof(ResourceFilter));
+                options.Filters.Add(typeof(RequestModelValidationFilter));
+                options.Filters.Add(typeof(ExceptionHandlerFilter));
+                
+            });
+
+            services.AddAutoMapper();
+            
+            services.AddSingleton(GetDbContextOptionsBuilder(env).Options);
+
+            services.AddDbContext<IBlogDbContext, BlogDbContext>(contextLifetime: ServiceLifetime.Scoped, optionsLifetime: ServiceLifetime.Singleton);
+
             services.AddScoped<IArticleService, ArticleService>();
         }
 
@@ -27,11 +77,25 @@ namespace DotNetCore
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.Run(async (context) =>
-            {
-                await context.Response.WriteAsync("Hello World!");
-            });
+            app.UseMvc();
         }
+
+        #region Helpers
+
+        private DbContextOptionsBuilder<DbContext> GetDbContextOptionsBuilder(IHostingEnvironment env)
+        {
+            var dbContextOptionsBuilder = new DbContextOptionsBuilder<DbContext>();
+
+            dbContextOptionsBuilder.UseSqlServer(configuration.GetConnectionString("connectionString"));
+
+            if (env.IsDevelopment())
+            {
+                dbContextOptionsBuilder.UseLoggerFactory(loggerFactory);
+            }
+
+            return dbContextOptionsBuilder;
+        }
+
+        #endregion
     }
 }

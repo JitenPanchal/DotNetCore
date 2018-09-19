@@ -3,6 +3,7 @@ using DotNetCore.Database;
 using DotNetCore.Database.Entities;
 using DotNetCore.Enums;
 using DotNetCore.Models;
+using DotNetCore.Models.Response;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -13,20 +14,20 @@ namespace DotNetCore.Services
 {
     public class ArticleService : BaseService, IArticleService
     {
-        const int maxArticleFeedbackAttempts = 3;
+        private IBlogDbContext blogDbContext;
+        private const int maxArticleFeedbackAttempts = 3;
 
         #region Error Messages
 
-        const string InvalidArticleFeedbackOperation = "User has exceeded max feedback attempts";
-        private IBlogDbContext blogDbContext;
+        private const string InvalidArticleFeedbackOperation = "User has exceeded max feedback attempts";
 
         #endregion
-
-        public int MaxArticleFeedbackAttempts => maxArticleFeedbackAttempts;
 
         public ArticleService(IBlogDbContext blogDbContext) {
             this.blogDbContext = blogDbContext;
         }
+
+        public int MaxArticleFeedbackAttempts => maxArticleFeedbackAttempts;
 
         public virtual void PublishArticle(int articleId, bool saveChanges = false)
         {
@@ -277,6 +278,23 @@ namespace DotNetCore.Services
             articleFeedback.Comments = comments;
             articleFeedback.CommentDate = DateTime.UtcNow;
             return articleFeedback;
+        }
+
+        public IQueryable<Article> GetArticles(ArticlesSortBy articlesSortBy)
+        {
+            var query = from it in blogDbContext.Set<Article>() select it;
+
+            switch (articlesSortBy)
+            {
+                case ArticlesSortBy.MostLikes:
+                    //query = query.OrderByDescending(it => it.LikeCount);
+                    break;
+                case ArticlesSortBy.MostRecents:
+                    query = query.OrderByDescending(it => it.PublishDate);
+                    break;
+            }
+
+            return query;
         }
 
         #endregion

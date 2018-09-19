@@ -1,6 +1,7 @@
 ﻿using DotNetCore.Database.Entities;
 using DotNetCore.Enums;
 using DotNetCore.Models;
+using DotNetCore.Models.Response;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,5 +34,7 @@ namespace DotNetCore.Contracts
         IQueryable<ArticleStatResponse> GetArticlesWithStatQuery();
 
         IQueryable<ArticleFeedback> GetArticleStatQuery(ArticleStatus status);
+
+        IQueryable<Article> GetArticles(ArticlesSortBy articlesSortBy);
     }
 }

@@ -8,5 +8,7 @@ namespace DotNetCore.Constants
     public static class Database
     {
         public const string SchemaName = "dbo";
+        public const string EntityEntry = "EntityEntry";
+        public const string DbContext = "DbContext";
     }
 }

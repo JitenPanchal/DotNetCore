@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace DotNetCore.Database.Entities
 {
-    public class Article : AuditableEntity
+    public partial class Article : AuditableEntity
     {
         public string Title { get; set; }
         public string Body { get; set; }

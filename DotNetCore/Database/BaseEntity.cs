@@ -14,5 +14,28 @@ namespace DotNetCore.Database
         public int Id { get; set; }
 
         internal virtual void OnBeforeSaveEntity(EntityEntry entityEntry) { }
+
+        protected static IDbContext GetDbContext(IDictionary<object, object> items)
+        {
+            return GetDictionaryItem<IDbContext>(items, Constants.Database.DbContext);
+        }
+
+        protected static EntityEntry GetEntityEntry(IDictionary<object, object> items)
+        {
+            return GetDictionaryItem<EntityEntry>(items, Constants.Database.EntityEntry);
+        }
+
+        protected static T GetDictionaryItem<T>(IDictionary<object, object> items, string key)
+        {
+            if (items == null || items.Count == 0 || !items.ContainsKey(key))
+                throw new KeyNotFoundException(nameof(items));
+
+            var entry = items[key];
+
+            if (!(entry is T))
+                throw new ArgumentException(nameof(items));
+
+            return (T)entry;
+        }
     }
 }

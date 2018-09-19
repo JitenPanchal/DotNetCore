@@ -1,20 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Runtime.Serialization;
 
-namespace DotNetCore.Models
+namespace DotNetCore.Models.Response
 {
-    public class ArticleStatResponse
+    [DataContract]
+    public class ArticleResponse
     {
+        [DataMember]
         public int Id { get; set; }
+        [DataMember]
         public string Title { get; set; }
+        [DataMember]
         public string Body { get; set; }
+        [DataMember]
         public string Author { get; set; }
+        [DataMember]
         public DateTime? PublishDate { get; set; }
+        [DataMember]
         public bool IsPublished { get; set; }
-        public long? LikeCount { get; set; }
-        public long? UnLikeCount { get; set; }
-        public long? NoneCount { get; set; }
     }
 }
