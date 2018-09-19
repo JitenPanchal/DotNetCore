@@ -2,7 +2,6 @@
 using DotNetCore.Models.Request;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using AutoMapper;
 using DotNetCore.Database.Entities;
@@ -52,14 +51,5 @@ namespace DotNetCore.Controllers
             blogDbContext.Create(article, true);
             return CreatedAtRoute(nameof(GetArticle), new { id = article.Id });
         }
-    }
-
-    [DataContract]
-    public class SomeData
-    {
-        [DataMember]
-        public int Id { get; set; }
-        [DataMember]
-        public string Name { get; set; }
     }
 }
