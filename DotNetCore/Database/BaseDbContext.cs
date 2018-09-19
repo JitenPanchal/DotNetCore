@@ -17,6 +17,7 @@ namespace DotNetCore.Database
     {
         public BaseDbContext(DbContextOptions<DbContext> options) : base(options) {}
 
+        /*
         public virtual async Task<TEntity> GetByIdAsync<TEntity>(int id, bool readOnly = true, bool throwExceptionOnEntityNotFound = false) where TEntity : BaseEntity
         {
             TEntity entity = await GetByIdQuery<TEntity>(id, readOnly).SingleOrDefaultAsync();
@@ -75,7 +76,7 @@ namespace DotNetCore.Database
 
             return isValidEntityId;
         }
-
+        */
         public override int SaveChanges()
         {
             ValidateEntities();
@@ -131,7 +132,7 @@ namespace DotNetCore.Database
                 (entityEntry.Entity as BaseEntity).OnBeforeSaveEntity(entityEntry);
             }
         }
-
+        /*
         protected virtual IQueryable<TEntity> GetQueryable<TEntity>(
           Expression<Func<TEntity, bool>> filter = null,
           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
@@ -283,6 +284,7 @@ namespace DotNetCore.Database
             return GetQueryable<TEntity>(filter).AnyAsync();
         }
 
+    
         public void Create<T>(IList<T> entities, bool saveChanges = false) where T : BaseEntity
         {
             foreach (var entity in entities)
@@ -328,6 +330,6 @@ namespace DotNetCore.Database
             Set<TEntity>().Remove(entity);
             SaveChanges(saveChanges);
         }
-
+        */
     }
 }

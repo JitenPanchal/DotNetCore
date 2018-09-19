@@ -16,8 +16,10 @@ namespace DotNetCore.IntegrationTests.Services
     [TestClass]
     public class ArticleServiceTests : BaseIntegrationTest
     {
-        private IArticleService articleService;
+        private IMembershipService membershipService;
         private IBlogDbContext blogDbContext;
+        private IArticleService articleService;
+        
         private TransactionScope transactionScope;
 
         [TestInitialize]
@@ -25,9 +27,10 @@ namespace DotNetCore.IntegrationTests.Services
         {
             blogDbContext = CreateBlogDbContext();
             transactionScope = CreateTransactionScope();
-            blogDbContext.Create(GetUserList(), true);
-            blogDbContext.Create(GetArticleList(blogDbContext), true);
-            articleService = new ArticleService(blogDbContext);
+            membershipService = new MembershipService(blogDbContext);
+            articleService = new ArticleService(blogDbContext, membershipService);
+            articleService.Create(GetUserList(), true);
+            articleService.Create(GetArticleList(blogDbContext), true);
         }
 
         [TestCleanup]
@@ -98,7 +101,7 @@ namespace DotNetCore.IntegrationTests.Services
 
             articleService.PublishArticle(article.Id);
 
-            var publishedArticle = blogDbContext.GetById<Article>(article.Id);
+            var publishedArticle = articleService.GetById<Article>(article.Id);
 
             Assert.AreEqual(publishedArticle.IsPublished, true);
             Assert.AreEqual(publishedArticle.PublishDate.HasValue, true);
@@ -171,7 +174,7 @@ namespace DotNetCore.IntegrationTests.Services
             articleService.PublishArticle(article.Id);
             articleService.UnPublishArticle(article.Id);
 
-            var unPublishedArticle = blogDbContext.GetById<Article>(article.Id);
+            var unPublishedArticle = articleService.GetById<Article>(article.Id);
 
             Assert.AreEqual(unPublishedArticle.IsPublished, false);
             Assert.AreEqual(unPublishedArticle.PublishDate.HasValue, false);
@@ -245,9 +248,7 @@ namespace DotNetCore.IntegrationTests.Services
         {
             var article = blogDbContext.Set<Article>().First();
 
-            var user = blogDbContext.Set<User>().First();
-
-            articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
+            articleService.SaveArticleFeedback(article.Id, ArticleStatus.Like);
 
             var articleMostLiked = articleService.GetArticleMostLikedQuery().First();
             Assert.IsTrue(articleMostLiked.Count > 0);
@@ -261,28 +262,14 @@ namespace DotNetCore.IntegrationTests.Services
         [ExpectedException(typeof(EntityNotFoundException))]
         public void SaveArticleFeedback_Should_Throw_EntityNotFoundException_If_Article_Is_Not_Found()
         {
-            articleService.SaveArticleFeedback(int.MaxValue, 1, ArticleStatus.Like);
+            articleService.SaveArticleFeedback(int.MaxValue, ArticleStatus.Like);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void SaveArticleFeedback_Should_Throw_ArgumentException_If_Article_Id_Is_Not_Valid()
         {
-            articleService.SaveArticleFeedback(-1, 1, ArticleStatus.Like);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(EntityNotFoundException))]
-        public void SaveArticleFeedback_Should_Throw_EntityNotFoundException_If_User_Is_Not_Found()
-        {
-            articleService.SaveArticleFeedback(1, int.MaxValue, ArticleStatus.Like);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentException))]
-        public void SaveArticleFeedback_Should_Throw_ArgumentException_If_UserId_Id_Is_Not_Valid()
-        {
-            articleService.SaveArticleFeedback(1, -1, ArticleStatus.Like);
+            articleService.SaveArticleFeedback(-1, ArticleStatus.Like);
         }
 
         #endregion
@@ -294,16 +281,14 @@ namespace DotNetCore.IntegrationTests.Services
         {
             var article = blogDbContext.Set<Article>().First();
 
-            var user = blogDbContext.Set<User>().First();
+            articleService.SaveArticleFeedback(article.Id, ArticleStatus.Like);
 
-            articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
-
-            var articleFeedback = blogDbContext.Set<ArticleFeedback>().AsNoTracking().Where(it => it.UserId == user.Id && it.ArticleId == article.Id).Single();
+            var articleFeedback = blogDbContext.Set<ArticleFeedback>().AsNoTracking().Where(it => it.UserId == membershipService.CurrentUser.Id && it.ArticleId == article.Id).Single();
 
             Assert.IsNotNull(articleFeedback);
             Assert.IsTrue(articleFeedback.FeedbackCount == 1);
             Assert.IsTrue(articleFeedback.ArticleId == article.Id);
-            Assert.IsTrue(articleFeedback.UserId == user.Id);
+            Assert.IsTrue(articleFeedback.UserId == membershipService.CurrentUser.Id);
         }
 
         [TestMethod]
@@ -312,11 +297,9 @@ namespace DotNetCore.IntegrationTests.Services
         {
             var article = blogDbContext.Set<Article>().First();
 
-            var user = blogDbContext.Set<User>().First();
-
             for (int i = 0; i <= articleService.MaxArticleFeedbackAttempts; i++)
             {
-                articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
+                articleService.SaveArticleFeedback(article.Id, ArticleStatus.Like);
             }
         }
 

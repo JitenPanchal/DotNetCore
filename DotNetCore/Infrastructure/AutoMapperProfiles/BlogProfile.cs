@@ -11,6 +11,7 @@ namespace DotNetCore.Infrastructure.AutoMapperProfiles
         {
             CreateMap<Article, ArticleResponse>();
             CreateMap<CreateArticleRequest, Article>();
+            CreateMap<UpdateArticleRequest, Article>();
         }
     }
 }

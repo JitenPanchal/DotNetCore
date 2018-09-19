@@ -1,45 +1,40 @@
-﻿using DotNetCore.Contracts;
+﻿using AutoMapper;
+using DotNetCore.Contracts;
+using DotNetCore.Database.Entities;
+using DotNetCore.Enums;
+using DotNetCore.Infrastructure.Filters;
 using DotNetCore.Models.Request;
+using DotNetCore.Models.Response;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
-using DotNetCore.Database.Entities;
-using DotNetCore.Models.Response;
-using DotNetCore.Infrastructure.Filters;
-using DotNetCore.Database;
 
 namespace DotNetCore.Controllers
 {
     [Route("api/v1/articles")]
-    public class ArticleController : Controller
+    public class ArticleController : BaseController
     {
         private readonly IArticleService articleService;
         private readonly IMapper mapper;
-        private readonly IBlogDbContext blogDbContext;
 
-        public ArticleController(IMapper mapper, IArticleService articleService, IBlogDbContext blogDbContext)
+        public ArticleController(IMapper mapper, IArticleService articleService) : base(mapper, articleService)
         {
             this.articleService = articleService;
             this.mapper = mapper;
-            this.blogDbContext = blogDbContext;
         }
 
         [HttpGet()]
-        public async Task<IActionResult> GetArticles([FromQuery] ArticlesRequest articlesRequest)
+        public async Task<IActionResult> GetArticles([FromQuery] GetArticlesRequest articlesRequest)
         {
             var query = articleService.GetArticles(articlesRequest.SortBy).Where(it => it.IsPublished);
-
             var data = await query.ToPagedList<Article, ArticleResponse>(mapper, articlesRequest);
-
             return Ok(data);
         }
 
-        [HttpGet("{id}",Name = nameof(GetArticle))]
+        [HttpGet("{id}", Name = nameof(GetArticle))]
         public async Task<IActionResult> GetArticle([FromRoute] int id)
         {
-            var article = await blogDbContext.GetByIdAsync<Article>(id, readOnly: true, throwExceptionOnEntityNotFound: true);
-
+            var article = await articleService.GetByIdAsync<Article>(id, readOnly: true, throwExceptionOnEntityNotFound: true);
             return Ok(article);
         }
 
@@ -48,8 +43,59 @@ namespace DotNetCore.Controllers
         public IActionResult Post([FromBody]CreateArticleRequest createArticleRequest)
         {
             var article = mapper.Map<Article>(createArticleRequest);
-            blogDbContext.Create(article, true);
-            return CreatedAtRoute(nameof(GetArticle), new { id = article.Id });
+            articleService.Create(article, true);
+            return CreatedAtRoute(nameof(GetArticle), new { id = article.Id }, article);
         }
-    }
+        
+        [HttpPut]
+        [Route("{id:int:min(1)}")]
+        [Securable("UpdateArticle", "Update Article")]
+        public async Task<IActionResult> Put(int id, [FromBody]UpdateArticleRequest updateArticleRequest)
+        {
+            return await Put<UpdateArticleRequest, Article>(id, updateArticleRequest);
+        }
+
+        [HttpDelete]
+        [Route("{id:int:min(1)}")]
+        [Securable("DeleteArticle", "Delete Article")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            return await Delete<Article>(id);
+        }
+
+        [HttpPut]
+        [Route("{id:int:min(1)}/publish")]
+        [Securable("PublishArticle", "Publish Article")]
+        public IActionResult PublishArticle(int id)
+        {
+            articleService.PublishArticle(id);
+            return NoContent();
+        }
+
+        [HttpPut]
+        [Route("{id:int:min(1)}/unpublish")]
+        [Securable("HideArticle", "Hide Article")]
+        public IActionResult UnPublishArticle(int id)
+        {
+            articleService.UnPublishArticle(id);
+            return NoContent();
+        }
+
+        [HttpPut]
+        [Route("{id:int:min(1)}/like")]
+        public IActionResult LikeArticle(int id)
+        {
+
+            articleService.SaveArticleFeedback(id, ArticleStatus.Like);
+            return NoContent();
+        }
+
+        [HttpPut]
+        [Route("{id:int:min(1)}/unlike")]
+        public IActionResult UnLikeArticle(int id)
+        {
+            articleService.SaveArticleFeedback(id, ArticleStatus.UnLike);
+            return NoContent();
+        }
+     }
 }

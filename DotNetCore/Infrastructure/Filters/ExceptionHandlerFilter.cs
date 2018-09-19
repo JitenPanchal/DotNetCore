@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Authorization;
 
 namespace DotNetCore.Infrastructure.Filters
 {
@@ -38,6 +37,4 @@ namespace DotNetCore.Infrastructure.Filters
             return new StatusCodeResult(StatusCodes.Status500InternalServerError);
         }
     }
-
-    
 }

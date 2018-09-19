@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DotNetCore.Contracts
 {
-    public interface IArticleService : IBaseService
+    public interface IArticleService : IEntityService
     {
         int MaxArticleFeedbackAttempts { get; }
 
@@ -17,7 +17,7 @@ namespace DotNetCore.Contracts
 
         void UnPublishArticle(int articleId, bool saveChanges = true);
 
-        void SaveArticleFeedback(int articleId, int userId, ArticleStatus articleStatus);
+        void SaveArticleFeedback(int articleId, ArticleStatus articleStatus);
 
         IQueryable<ArticleFeedback> GetArticleFeeback(int articleId, int userId);
 

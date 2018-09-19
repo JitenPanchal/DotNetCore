@@ -15,6 +15,7 @@ namespace DotNetCore.UnitTests
     [TestClass]
     public class ArticleServiceTests : BaseUnitTest
     {
+        private IMembershipService membershipService;
         IArticleService articleService;
         IBlogDbContext blogDbContext;
 
@@ -22,11 +23,10 @@ namespace DotNetCore.UnitTests
         public void OnTestInitialize()
         {
             blogDbContext = CreateInMemoryBlogDbContext();
-
-            blogDbContext.Create(GetArticleList(), true);
-            blogDbContext.Create(GetUserList(), true);
-
-            articleService = new ArticleService(blogDbContext);
+            membershipService = new MembershipService(blogDbContext);
+            articleService = new ArticleService(blogDbContext, membershipService);
+            articleService.Create(GetArticleList(), true);
+            articleService.Create(GetUserList(), true);
         }
 
         [TestCleanup]
@@ -94,7 +94,7 @@ namespace DotNetCore.UnitTests
 
             articleService.PublishArticle(article.Id);
 
-            var updatedArticle = blogDbContext.GetById<Article>(article.Id);
+            var updatedArticle = articleService.GetById<Article>(article.Id);
 
             Assert.AreEqual(DateTime.UtcNow.Date, updatedArticle.PublishDate.Value.Date);
             Assert.AreEqual(true, updatedArticle.IsPublished);
@@ -120,7 +120,7 @@ namespace DotNetCore.UnitTests
 
             articleService.UnPublishArticle(article.Id);
 
-            var updatedArticle = blogDbContext.GetById<Article>(article.Id);
+            var updatedArticle = articleService.GetById<Article>(article.Id);
 
             Assert.AreEqual(null, updatedArticle.PublishDate);
             Assert.AreEqual(false, updatedArticle.IsPublished);
@@ -134,28 +134,14 @@ namespace DotNetCore.UnitTests
         [ExpectedException(typeof(EntityNotFoundException))]
         public void SaveArticleFeedback_Should_Throw_EntityNotFoundException_If_Article_Is_Not_Found()
         {
-            articleService.SaveArticleFeedback(int.MaxValue, 1, ArticleStatus.Like);
+            articleService.SaveArticleFeedback(int.MaxValue, ArticleStatus.Like);
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentException))]
         public void SaveArticleFeedback_Should_Throw_ArgumentException_If_Article_Id_Is_Not_Valid()
         {
-            articleService.SaveArticleFeedback(-1, 1, ArticleStatus.Like);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(EntityNotFoundException))]
-        public void SaveArticleFeedback_Should_Throw_EntityNotFoundException_If_User_Is_Not_Found()
-        {
-            articleService.SaveArticleFeedback(1, int.MaxValue, ArticleStatus.Like);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentException))]
-        public void SaveArticleFeedback_Should_Throw_ArgumentException_If_UserId_Id_Is_Not_Valid()
-        {
-            articleService.SaveArticleFeedback(1, -1, ArticleStatus.Like);
+            articleService.SaveArticleFeedback(-1, ArticleStatus.Like);
         }
 
         #endregion
@@ -166,16 +152,15 @@ namespace DotNetCore.UnitTests
         public void SaveArticleFeedback_Should_Add_Feedback_Entry()
         {
             var article = blogDbContext.Set<Article>().AsNoTracking().FirstOrDefault();
-            var user = blogDbContext.Set<User>().AsNoTracking().FirstOrDefault();
 
-            articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
+            articleService.SaveArticleFeedback(article.Id, ArticleStatus.Like);
 
-            var articleFeedback = articleService.GetArticleFeeback(article.Id, user.Id).FirstOrDefault();
+            var articleFeedback = articleService.GetArticleFeeback(article.Id, membershipService.CurrentUser.Id).FirstOrDefault();
 
             Assert.IsNotNull(articleFeedback);
             Assert.IsTrue(articleFeedback.FeedbackCount == 1);
             Assert.IsTrue(articleFeedback.ArticleId == article.Id);
-            Assert.IsTrue(articleFeedback.UserId == user.Id);
+            Assert.IsTrue(articleFeedback.UserId == membershipService.CurrentUser.Id);
         }
 
         [TestMethod]
@@ -183,11 +168,10 @@ namespace DotNetCore.UnitTests
         public void SaveArticleFeedback_Should_Throw_Exception_On_Exceeding_Max_Attempts()
         {
             var article = blogDbContext.Set<Article>().FirstOrDefault();
-            var user = blogDbContext.Set<User>().FirstOrDefault();
 
             for (int i = 0; i <= articleService.MaxArticleFeedbackAttempts; i++)
             {
-                articleService.SaveArticleFeedback(article.Id, user.Id, ArticleStatus.Like);
+                articleService.SaveArticleFeedback(article.Id, ArticleStatus.Like);
             }
         }
 
