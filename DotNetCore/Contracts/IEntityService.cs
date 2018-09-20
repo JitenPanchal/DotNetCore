@@ -27,9 +27,21 @@ namespace DotNetCore.Contracts
 
         void Create<T>(IList<T> entities, bool saveChanges = false) where T : BaseEntity;
 
-        void Update<T>(T entity, bool saveChanges = false) where T : BaseEntity;
+        Task<int> CreateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity;
+
+        Task<int> CreateAsync<TEntity>(IList<TEntity> entities) where TEntity : BaseEntity;
+
+        void Update<TEntity>(TEntity entity, bool saveChanges = false) where TEntity : BaseEntity;
+
+        void Update<TEntity>(IList<TEntity> entities, bool saveChanges = false) where TEntity : BaseEntity;
+
+        Task<int> UpdateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity;
+
+        Task<int> UpdateAsync<TEntity>(IList<TEntity> entities) where TEntity : BaseEntity;
 
         void Delete<T>(T entity, bool saveChanges = false) where T : BaseEntity;
+
+        Task<int> DeleteAsync<TEntity>(TEntity entity) where TEntity : BaseEntity;
 
         IEnumerable<TEntity> GetAll<TEntity>(
           Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,

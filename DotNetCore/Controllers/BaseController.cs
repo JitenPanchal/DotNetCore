@@ -22,20 +22,6 @@ namespace DotNetCore.Controllers
             this.entityService = entityService;
         }
 
-        protected async Task<IActionResult> Get<TEntity, TMapTo>(int id) where TEntity : BaseEntity where TMapTo : class
-        {
-            return Ok(mapper.Map<TMapTo>(await entityService.GetByIdAsync<TEntity>(id, true, true)));
-        }
-
-        protected IActionResult Post<TRequestModel, TEntity>(TRequestModel requestModel) where TEntity : BaseEntity where TRequestModel : class
-        {
-            var entity = mapper.Map<TEntity>(requestModel);
-
-            entityService.Create<TEntity>(entity);
-
-            return Ok(mapper.Map<ArticleResponse>(entity));
-        }
-
         protected async Task<IActionResult> Put<TRequestModel, TEntity>(int id, TRequestModel requestModel) where TEntity : BaseEntity where TRequestModel : class
         {
             var entity = await entityService.GetByIdAsync<TEntity>(id, false, true);
@@ -51,9 +37,9 @@ namespace DotNetCore.Controllers
         {
             var entity = entityService.GetById<TEntity>(id, false, true);
 
-            entityService.Delete(entity,true);
+            await entityService.DeleteAsync(entity);
 
-            return Ok(entity);
+            return NoContent();
         }
     }
 }

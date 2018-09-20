@@ -31,7 +31,7 @@ namespace DotNetCore.Controllers
             return Ok(data);
         }
 
-        [HttpGet("{id}", Name = nameof(GetArticle))]
+        [HttpGet("{id:int}", Name = nameof(GetArticle))]
         public async Task<IActionResult> GetArticle([FromRoute] int id)
         {
             var article = await articleService.GetByIdAsync<Article>(id, readOnly: true, throwExceptionOnEntityNotFound: true);
@@ -40,15 +40,15 @@ namespace DotNetCore.Controllers
 
         [HttpPost]
         [Securable("CreateArticle", "Create Article")]
-        public IActionResult Post([FromBody]CreateArticleRequest createArticleRequest)
+        public async Task<IActionResult> Post([FromBody]CreateArticleRequest createArticleRequest)
         {
             var article = mapper.Map<Article>(createArticleRequest);
-            articleService.Create(article, true);
+            await articleService.CreateAsync(article);
             return CreatedAtRoute(nameof(GetArticle), new { id = article.Id }, article);
         }
         
         [HttpPut]
-        [Route("{id:int:min(1)}")]
+        [Route("{id:int}")]
         [Securable("UpdateArticle", "Update Article")]
         public async Task<IActionResult> Put(int id, [FromBody]UpdateArticleRequest updateArticleRequest)
         {
@@ -56,7 +56,7 @@ namespace DotNetCore.Controllers
         }
 
         [HttpDelete]
-        [Route("{id:int:min(1)}")]
+        [Route("{id:int}")]
         [Securable("DeleteArticle", "Delete Article")]
         public async Task<IActionResult> Delete(int id)
         {

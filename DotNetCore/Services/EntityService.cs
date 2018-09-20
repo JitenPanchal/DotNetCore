@@ -80,38 +80,52 @@ namespace DotNetCore.Services
             return isValidEntityId;
         }
 
-        public void Create<T>(IList<T> entities, bool saveChanges = false) where T : BaseEntity
+        public void Create<TEntity>(IList<TEntity> entities, bool saveChanges = false) where TEntity : BaseEntity
         {
-            foreach (var entity in entities)
-            {
-                Create<T>(entity, saveChanges);
-            }
+            Create(entities);
+            SaveChanges(saveChanges);
         }
 
         public virtual void Create<TEntity>(TEntity entity, bool saveChanges = false) where TEntity : BaseEntity
         {
-            if (entity is AuditableEntity)
-            {
-                var auditableEntity = entity as AuditableEntity;
-                auditableEntity.CreatedDate = DateTime.UtcNow;
-                // TODO
-                //auditableEntity.CreatedBy = membershipService.CurrentUser.Id;
-            }
-            dbContext.Set<TEntity>().Add(entity);
+            Create<TEntity>(new List<TEntity>() { entity }, saveChanges);
             SaveChanges(saveChanges);
+        }
+
+        public virtual async Task<int> CreateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
+        {
+            Create<TEntity>(new List<TEntity>() { entity });
+            return await dbContext.SaveChangesAsync();
+        }
+
+        public virtual async Task<int> CreateAsync<TEntity>(IList<TEntity> entities) where TEntity : BaseEntity
+        {
+            Create<TEntity>(entities);
+            return await dbContext.SaveChangesAsync();
         }
 
         public virtual void Update<TEntity>(TEntity entity, bool saveChanges = false) where TEntity : BaseEntity
         {
-            if (entity is AuditableEntity)
-            {
-                var auditableEntity = entity as AuditableEntity;
-                auditableEntity.ModifiedDate = DateTime.UtcNow;
-                // TODO
-                //auditableEntity.ModifiedBy = membershipService.CurrentUser.Id;
-            }
-            dbContext.Set<TEntity>().Update(entity);
+            Update<TEntity>(new List<TEntity>() { entity });
             SaveChanges(saveChanges);
+        }
+
+        public virtual void Update<TEntity>(IList<TEntity> entities, bool saveChanges = false) where TEntity : BaseEntity
+        {
+            Update<TEntity>(entities);
+            SaveChanges(saveChanges);
+        }
+
+        public virtual async Task<int> UpdateAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
+        {
+            Update<TEntity>(new List<TEntity>() { entity });
+            return await dbContext.SaveChangesAsync();
+        }
+
+        public virtual async Task<int> UpdateAsync<TEntity>(IList<TEntity> entities) where TEntity : BaseEntity
+        {
+            Update<TEntity>(entities);
+            return await dbContext.SaveChangesAsync();
         }
 
         public virtual void Delete<TEntity>(object id) where TEntity : BaseEntity
@@ -120,16 +134,16 @@ namespace DotNetCore.Services
             Delete(entity);
         }
 
+        public virtual async Task<int> DeleteAsync<TEntity>(TEntity entity) where TEntity : BaseEntity
+        {
+            dbContext.Set<TEntity>().Remove(entity);
+            return await dbContext.SaveChangesAsync();
+        }
+
         public virtual void Delete<TEntity>(TEntity entity, bool saveChanges = false) where TEntity : BaseEntity
         {
             dbContext.Set<TEntity>().Remove(entity);
             SaveChanges(saveChanges);
-        }
-
-        private void SaveChanges(bool saveChanges)
-        {
-            if (saveChanges)
-                dbContext.SaveChanges(saveChanges);
         }
 
         protected virtual IQueryable<TEntity> GetQueryable<TEntity>(
@@ -282,5 +296,45 @@ namespace DotNetCore.Services
         {
             return GetQueryable<TEntity>(filter).AnyAsync();
         }
+
+        #region Helpers
+
+        private void Create<TEntity>(IList<TEntity> entities) where TEntity : BaseEntity
+        {
+            foreach (var entity in entities)
+            {
+                if (entity is AuditableEntity)
+                {
+                    var auditableEntity = entity as AuditableEntity;
+                    auditableEntity.CreatedDate = DateTime.UtcNow;
+                    // TODO
+                    //auditableEntity.CreatedBy = membershipService.CurrentUser.Id;
+                }
+                dbContext.Set<TEntity>().Add(entity);
+            }
+        }
+
+        private void Update<TEntity>(IList<TEntity> entities) where TEntity : BaseEntity
+        {
+            foreach (var entity in entities)
+            {
+                if (entity is AuditableEntity)
+                {
+                    var auditableEntity = entity as AuditableEntity;
+                    auditableEntity.ModifiedDate = DateTime.UtcNow;
+                    // TODO
+                    //auditableEntity.ModifiedBy = membershipService.CurrentUser.Id;
+                }
+            }
+            dbContext.Set<TEntity>().UpdateRange(entities);
+        }
+
+        private void SaveChanges(bool saveChanges)
+        {
+            if (saveChanges)
+                dbContext.SaveChanges(saveChanges);
+        }
+
+        #endregion
     }
 }
