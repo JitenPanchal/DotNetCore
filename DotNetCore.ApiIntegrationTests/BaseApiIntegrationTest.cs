@@ -1,17 +1,15 @@
-﻿using DotNetCore.Database;
+﻿using DotNetCore.ApiIntegrationTests.Database;
+using DotNetCore.Database;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Net.Http;
-using System.Transactions;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using System;
 using System.IO;
 using System.Net.Http;
+using System.Transactions;
 
 namespace DotNetCore.ApiIntegrationTests
 {
@@ -54,11 +52,12 @@ namespace DotNetCore.ApiIntegrationTests
         [AssemblyInitialize()]
         public static void AssemblyInitialize(TestContext context)
         {
-            testDatabaseConnection = string.Format(GetConnectionString(), Guid.NewGuid().ToString("N"));
+            testDatabaseConnection = string.Format(GetConnectionString(), TestStartup.Guid);
 
             using (var blogDbContext = CreateBlogDbContext())
             {
                 blogDbContext.Database.EnsureCreated();
+                DataSeeder.Seed(blogDbContext);
             }
 
             StartServer();
@@ -90,7 +89,7 @@ namespace DotNetCore.ApiIntegrationTests
             var builder = new WebHostBuilder()
                   .UseContentRoot(GetContentRootPath())
                   .UseEnvironment("Development")
-                  .UseStartup<Startup>();  // Uses Start up class from your API Host project to configure the test server
+                  .UseStartup<TestStartup>();  // Uses Start up class from your API Host project to configure the test server
 
             testServer = new TestServer(builder);
             Client = testServer.CreateClient();
@@ -98,10 +97,9 @@ namespace DotNetCore.ApiIntegrationTests
 
         private static string GetContentRootPath()
         {
-            var testProjectPath = AppDomain.CurrentDomain.BaseDirectory; //PlatformServices.Default.Application.ApplicationBasePath;
+            var testProjectPath = AppDomain.CurrentDomain.BaseDirectory;
             var relativePathToHostProject = @"..\..\..\..\..\DotNetCore\DotNetCore";
             return Path.Combine(testProjectPath, relativePathToHostProject);
-            //return @"C:\Code\Git\asp.net core\DotNetCore\DotNetCore";
         }
     }
 }

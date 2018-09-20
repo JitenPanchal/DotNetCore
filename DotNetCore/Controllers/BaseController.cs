@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace DotNetCore.Controllers
 {
-    public abstract class BaseController : Controller
+    public abstract class BaseController : ControllerBase
     {
         private readonly IMapper mapper;
         private readonly IEntityService entityService;

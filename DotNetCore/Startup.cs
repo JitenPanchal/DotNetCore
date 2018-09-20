@@ -15,7 +15,7 @@ namespace DotNetCore
 {
     public class Startup
     {
-        private readonly IConfigurationRoot configuration;
+        protected IConfigurationRoot configuration;
 
         private static readonly ILoggerFactory loggerFactory = new LoggerFactory()
           .AddDebug((categoryName, logLevel) => (logLevel == LogLevel.Information) && (categoryName == DbLoggerCategory.Database.Command.Name))
@@ -68,6 +68,7 @@ namespace DotNetCore
             services.AddDbContext<IBlogDbContext, BlogDbContext>(contextLifetime: ServiceLifetime.Scoped, optionsLifetime: ServiceLifetime.Singleton);
 
             services.AddScoped<IArticleService, ArticleService>();
+            services.AddScoped<IMembershipService, MembershipService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -82,11 +83,16 @@ namespace DotNetCore
 
         #region Helpers
 
+        protected virtual string GetConnectionString()
+        {
+            return configuration.GetConnectionString("connectionString");
+        }
+
         private DbContextOptionsBuilder<DbContext> GetDbContextOptionsBuilder(IHostingEnvironment env)
         {
             var dbContextOptionsBuilder = new DbContextOptionsBuilder<DbContext>();
 
-            dbContextOptionsBuilder.UseSqlServer(configuration.GetConnectionString("connectionString"));
+            dbContextOptionsBuilder.UseSqlServer(GetConnectionString());
 
             if (env.IsDevelopment())
             {

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 namespace DotNetCore.Controllers
 {
     [Route("api/v1/articles")]
+    [ApiController]
     public class ArticleController : BaseController
     {
         private readonly IArticleService articleService;
