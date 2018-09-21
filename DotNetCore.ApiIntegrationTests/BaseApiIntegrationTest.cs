@@ -54,7 +54,7 @@ namespace DotNetCore.ApiIntegrationTests
         [AssemblyInitialize()]
         public static void AssemblyInitialize(TestContext context)
         {
-            testDatabaseConnection = string.Format(GetConnectionString(), TestStartup.Guid);
+            testDatabaseConnection = string.Format(GetConnectionString(), ApiIntegrationTestsStartup.Guid);
 
             using (var blogDbContext = CreateBlogDbContext())
             {
@@ -91,7 +91,7 @@ namespace DotNetCore.ApiIntegrationTests
             var builder = new WebHostBuilder()
                   .UseContentRoot(GetContentRootPath())
                   .UseEnvironment("Development")
-                  .UseStartup<TestStartup>();  // Uses Start up class from your API Host project to configure the test server
+                  .UseStartup<ApiIntegrationTestsStartup>();  // Uses Start up class from your API Host project to configure the test server
 
             testServer = new TestServer(builder);
             Client = testServer.CreateClient();

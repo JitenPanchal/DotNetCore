@@ -369,7 +369,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
 
         #endregion
 
-        #region Publish
+        #region UnPublish
 
         [TestMethod]
         public void UnPublish_Article_Should_UnPublish_Article()
@@ -404,6 +404,120 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             Assert.AreEqual(HttpStatusCode.OK, getHttpResponseMessage.StatusCode);
             Assert.IsTrue(getArticleResponse.IsPublished == false);
             Assert.IsTrue(getArticleResponse.PublishDate.HasValue == false);
+        }
+
+        #endregion
+
+        #region Like
+
+        [TestMethod]
+        public void Like_Article_Should_Create_ArticleFeedback()
+        {
+            var createArticleRequest = new CreateArticleRequest()
+            {
+                Title = GetUniqueStringValue("title_"),
+                Body = GetUniqueStringValue("body_"),
+                IsPublished = true,
+                PublishDate = DateTime.UtcNow,
+                Author = "God",
+            };
+
+            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
+
+            LikeArticle(createArticleResponse.Id, out HttpResponseMessage likeArticleHttpResponseMessage, out string likeArticleResponseString);
+            Assert.AreEqual(HttpStatusCode.NoContent, likeArticleHttpResponseMessage.StatusCode);
+        }
+
+        [TestMethod]
+        public void Like_Article_When_Called_Multiple_Times_Should_Return_BadRequest()
+        {
+            var createArticleRequest = new CreateArticleRequest()
+            {
+                Title = GetUniqueStringValue("title_"),
+                Body = GetUniqueStringValue("body_"),
+                IsPublished = true,
+                PublishDate = DateTime.UtcNow,
+                Author = "God",
+            };
+
+            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
+
+            for (int i = 0; i < 3; i++)
+            {
+                LikeArticle(createArticleResponse.Id, out HttpResponseMessage likeArticleHttpResponseMessage, out string likeArticleResponseString);
+            }
+
+            LikeArticle(createArticleResponse.Id, out HttpResponseMessage likeArticleHttpResponseMessage2, out string likeArticleResponseString2);
+            Assert.AreEqual(HttpStatusCode.BadRequest, likeArticleHttpResponseMessage2.StatusCode);
+        }
+
+        #endregion
+
+        #region UnLike
+
+        [TestMethod]
+        public void UnLike_Article_Should_Create_ArticleFeedback()
+        {
+            var createArticleRequest = new CreateArticleRequest()
+            {
+                Title = GetUniqueStringValue("title_"),
+                Body = GetUniqueStringValue("body_"),
+                IsPublished = true,
+                PublishDate = DateTime.UtcNow,
+                Author = "God",
+            };
+
+            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
+
+            UnLikeArticle(createArticleResponse.Id, out HttpResponseMessage unLikeArticleHttpResponseMessage, out string unLikeArticleResponseString);
+            Assert.AreEqual(HttpStatusCode.NoContent, unLikeArticleHttpResponseMessage.StatusCode);
+        }
+
+        [TestMethod]
+        public void UnLike_Article_When_Called_Multiple_Times_Should_Return_BadRequest()
+        {
+            var createArticleRequest = new CreateArticleRequest()
+            {
+                Title = GetUniqueStringValue("title_"),
+                Body = GetUniqueStringValue("body_"),
+                IsPublished = true,
+                PublishDate = DateTime.UtcNow,
+                Author = "God",
+            };
+
+            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
+
+            for (int i = 0; i < 3; i++)
+            {
+                LikeArticle(createArticleResponse.Id, out HttpResponseMessage unLikeArticleHttpResponseMessage, out string unLikeArticleResponseString);
+            }
+
+            LikeArticle(createArticleResponse.Id, out HttpResponseMessage unLikeArticleHttpResponseMessage2, out string unLikeArticleResponseString2);
+            Assert.AreEqual(HttpStatusCode.BadRequest, unLikeArticleHttpResponseMessage2.StatusCode);
         }
 
         #endregion
@@ -454,6 +568,20 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         {
             unPublishArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/unpublish", null).Result;
             unPublishArticleResponseString = unPublishArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+        }
+
+        private void LikeArticle(int articleId, out HttpResponseMessage likeArticleHttpResponseMessage,
+            out string likeArticleResponseString)
+        {
+            likeArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/like", null).Result;
+            likeArticleResponseString = likeArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+        }
+
+        private void UnLikeArticle(int articleId, out HttpResponseMessage unLikeArticleHttpResponseMessage,
+           out string unLikeArticleResponseString)
+        {
+            unLikeArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/unlike", null).Result;
+            unLikeArticleResponseString = unLikeArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
         }
 
         #endregion

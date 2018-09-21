@@ -4,11 +4,11 @@ using System;
 
 namespace DotNetCore
 {
-    public class TestStartup : Startup
+    public class ApiIntegrationTestsStartup : Startup
     {
         public readonly static string Guid = System.Guid.NewGuid().ToString("N");
 
-        public TestStartup(IHostingEnvironment env) : base(env)
+        public ApiIntegrationTestsStartup(IHostingEnvironment env) : base(env)
         {
             configuration = new ConfigurationBuilder().SetBasePath(AppDomain.CurrentDomain.BaseDirectory).AddJsonFile("appsettings.json").Build();
         }

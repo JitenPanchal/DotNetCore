@@ -24,6 +24,11 @@ namespace DotNetCore.Infrastructure.Filters
                 modelStateDictionary.AddModelError(memberName, validationException.Message);
             }
 
+            if (modelStateDictionary.Count == 0)
+            {
+                modelStateDictionary.AddModelError("Error", validationException.Message);
+            }
+
             return new BadRequestObjectResult(modelStateDictionary);
         }
 

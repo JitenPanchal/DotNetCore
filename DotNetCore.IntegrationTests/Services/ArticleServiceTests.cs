@@ -10,6 +10,7 @@ using DotNetCore.Contracts;
 using DotNetCore.Exceptions;
 using DotNetCore.Enums;
 using System.Transactions;
+using System.ComponentModel.DataAnnotations;
 
 namespace DotNetCore.IntegrationTests.Services
 {
@@ -292,7 +293,7 @@ namespace DotNetCore.IntegrationTests.Services
         }
 
         [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [ExpectedException(typeof(ValidationException))]
         public void SaveArticleFeedback_Should_Throw_Exception_On_Exceeding_Max_Attempts()
         {
             var article = blogDbContext.Set<Article>().First();

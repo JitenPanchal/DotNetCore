@@ -7,6 +7,7 @@ using DotNetCore.Models.Response;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -246,7 +247,7 @@ namespace DotNetCore.Services
 
             // check max no. of feedback attempts
             if (articleFeedback.FeedbackCount > MaxArticleFeedbackAttempts)
-                throw new InvalidOperationException(InvalidArticleFeedbackOperation);
+                throw new ValidationException(InvalidArticleFeedbackOperation);
 
             articleFeedback.ArticleId = article.Id;
             articleFeedback.UserId = membershipService.CurrentUser.Id;

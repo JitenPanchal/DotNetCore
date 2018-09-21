@@ -81,22 +81,5 @@ namespace DotNetCore.Controllers
             articleService.UnPublishArticle(id);
             return NoContent();
         }
-
-        [HttpPut]
-        [Route("{id:int:min(1)}/like")]
-        public IActionResult LikeArticle(int id)
-        {
-
-            articleService.SaveArticleFeedback(id, ArticleStatus.Like);
-            return NoContent();
-        }
-
-        [HttpPut]
-        [Route("{id:int:min(1)}/unlike")]
-        public IActionResult UnLikeArticle(int id)
-        {
-            articleService.SaveArticleFeedback(id, ArticleStatus.UnLike);
-            return NoContent();
-        }
      }
 }
