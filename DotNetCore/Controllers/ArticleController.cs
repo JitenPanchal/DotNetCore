@@ -45,7 +45,8 @@ namespace DotNetCore.Controllers
         {
             var article = mapper.Map<Article>(createArticleRequest);
             await articleService.CreateAsync(article);
-            return CreatedAtRoute(nameof(GetArticle), new { id = article.Id }, article);
+            var articleResponse = mapper.Map<Article, ArticleResponse>(article);
+            return CreatedAtRoute(nameof(GetArticle), new { id = articleResponse.Id }, articleResponse);
         }
         
         [HttpPut]

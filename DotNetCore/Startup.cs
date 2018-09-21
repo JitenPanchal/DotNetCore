@@ -47,9 +47,10 @@ namespace DotNetCore
                 }
             });
 
-            mvcOptions.AddMvcOptions((outputFormatters) =>
+            mvcOptions.AddMvcOptions((formatters) =>
             {
-                outputFormatters.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                formatters.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter());
+                formatters.InputFormatters.Add(new XmlDataContractSerializerInputFormatter(formatters));
             });
 
             services.AddMvc((options) =>

@@ -1,5 +1,6 @@
 ﻿using DotNetCore.ApiIntegrationTests.Database;
 using DotNetCore.Database;
+using DotNetCore.Enums;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Transactions;
 using System.Web;
 
@@ -95,6 +97,24 @@ namespace DotNetCore.ApiIntegrationTests
 
             testServer = new TestServer(builder);
             Client = testServer.CreateClient();
+        }
+
+        protected static HttpClient CreateHttpClient()
+        {
+            return testServer.CreateClient();
+        }
+
+            protected static HttpClient CreateHttpClient(DataFormat dataFormat)
+        {
+            var client = testServer.CreateClient();
+            client.DefaultRequestHeaders.Accept.Clear();
+            
+            if (dataFormat == DataFormat.Json)
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            else
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
+
+            return client;
         }
 
         private static string GetContentRootPath()

@@ -1,4 +1,5 @@
 ﻿using DotNetCore.ApiIntegrationTests.Fakes;
+using DotNetCore.Enums;
 using DotNetCore.Models;
 using DotNetCore.Models.Request;
 using DotNetCore.Models.Response;
@@ -70,9 +71,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region Post
 
         [TestMethod]
-        public async Task Post_Article_Should_Create_Article()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Post_Article_Should_Create_Article(DataFormat dataFormat)
         {
-            var articleRequest = new CreateArticleRequest()
+            var createArticleRequest = new CreateArticleRequest()
             {
                 Title = GetUniqueStringValue("title_"),
                 Body = GetUniqueStringValue("body_"),
@@ -81,22 +84,24 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            var response = await Client.PostAsJsonAsync("api/v1/articles", articleRequest);
-            var responseString = await response.Content.ReadAsStringAsync();
+            CreateArticle(createArticleRequest, dataFormat,
+            out HttpResponseMessage createHttpResponseMessage,
+            out string createResponseString,
+            out ArticleResponse createArticleResponse);
 
-            var articleResponse = JsonConvert.DeserializeObject<ArticleResponse>(responseString);
-
-            Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
-            Assert.AreEqual(articleRequest.Title, articleResponse.Title);
-            Assert.AreEqual(articleRequest.Body, articleResponse.Body);
-            Assert.AreEqual(articleRequest.Author, articleResponse.Author);
-            Assert.IsTrue(articleResponse.Id > 1);
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
         }
 
         [TestMethod]
-        public async Task Post_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_Same_Title()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Post_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_Same_Title(DataFormat dataFormat)
         {
-            var articleRequest = new CreateArticleRequest()
+            var createArticleRequest = new CreateArticleRequest()
             {
                 Title = GetUniqueStringValue("title_"),
                 Body = GetUniqueStringValue("body_"),
@@ -105,28 +110,33 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            var response = await Client.PostAsJsonAsync("api/v1/articles", articleRequest);
+            CreateArticle(createArticleRequest, 
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
-            var responseString = await response.Content.ReadAsStringAsync();
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
 
-            var articleResponse = JsonConvert.DeserializeObject<ArticleResponse>(responseString);
+            CreateArticle(createArticleRequest,
+                dataFormat, 
+                out HttpResponseMessage createHttpResponseMessage2,
+                out string createResponseString2,
+                out ArticleResponse createArticleResponse2);
 
-            Assert.AreEqual(HttpStatusCode.Created, response.StatusCode);
-            Assert.AreEqual(articleRequest.Title, articleResponse.Title);
-            Assert.AreEqual(articleRequest.Body, articleResponse.Body);
-            Assert.AreEqual(articleRequest.Author, articleResponse.Author);
-            Assert.IsTrue(articleResponse.Id > 1);
-
-
-            var response2 = await Client.PostAsJsonAsync("api/v1/articles", articleRequest);
-            var response2String = await response2.Content.ReadAsStringAsync();
-            Assert.AreEqual(HttpStatusCode.BadRequest, response2.StatusCode);
+            Assert.AreEqual(HttpStatusCode.BadRequest, createHttpResponseMessage2.StatusCode);
         }
 
         [TestMethod]
-        public async Task Post_Article_Should_Return_BadRequest_Response_When_Creating_Article_Invalid_Data()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Post_Article_Should_Return_BadRequest_Response_When_Creating_Article_Invalid_Data(DataFormat dataFormat)
         {
-            var articleRequest = new CreateArticleRequest()
+            var createArticleRequest = new CreateArticleRequest()
             {
                 Title = null,
                 Body = null,
@@ -135,19 +145,30 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = null,
             };
 
-            var response = await Client.PostAsJsonAsync("api/v1/articles", articleRequest);
-            var responseString = await response.Content.ReadAsStringAsync();
-            Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.BadRequest, createHttpResponseMessage.StatusCode);
         }
 
         [TestMethod]
-        public async Task Post_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_No_Data()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Post_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_No_Data(DataFormat dataFormat)
         {
-            var articleRequest = new CreateArticleRequest();
+            var createArticleRequest = new CreateArticleRequest();
 
-            var response = await Client.PostAsJsonAsync("api/v1/articles", articleRequest);
-            var responseString = await response.Content.ReadAsStringAsync();
-            Assert.AreEqual(HttpStatusCode.BadRequest, response.StatusCode);
+            CreateArticle(createArticleRequest,
+              dataFormat,
+              out HttpResponseMessage createHttpResponseMessage,
+              out string createResponseString,
+              out ArticleResponse createArticleResponse);
+
+
+            Assert.AreEqual(HttpStatusCode.BadRequest, createHttpResponseMessage.StatusCode);
         }
 
         #endregion
@@ -524,6 +545,18 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
 
         #region Helpers
 
+        private void CreateArticle(CreateArticleRequest createArticleRequest, DataFormat dataFormat,
+            out HttpResponseMessage createHttpResponseMessage,
+            out string createResponseString,
+            out ArticleResponse createArticleResponse)
+        {
+            CreateHttpClient().Post("api/v1/articles",
+                createArticleRequest, dataFormat,
+                out createHttpResponseMessage,
+                out createResponseString,
+                out createArticleResponse);
+        }
+
         private void CreateArticle(CreateArticleRequest createArticleRequest,
             out HttpResponseMessage createHttpResponseMessage,
             out string createResponseString,
@@ -532,6 +565,16 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             createHttpResponseMessage = Client.PostAsJsonAsync("api/v1/articles", createArticleRequest).Result;
             createResponseString = createHttpResponseMessage.Content.ReadAsStringAsync().Result;
             createArticleResponse = JsonConvert.DeserializeObject<ArticleResponse>(createResponseString);
+        }
+
+        private void CreateArticleXml(CreateArticleRequest createArticleRequest,
+            out HttpResponseMessage createHttpResponseMessage,
+            out string createResponseString,
+            out ArticleResponse createArticleResponse)
+        {
+            createHttpResponseMessage = CreateHttpClient(DataFormat.Xml).PostAsXmlAsync("api/v1/articles", createArticleRequest).Result;
+            createResponseString = createHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            createArticleResponse = createResponseString.ToXml<ArticleResponse>();
         }
 
         private void UpdateArticle(int articleId, UpdateArticleRequest updateArticleRequest,
