@@ -48,5 +48,32 @@ namespace System.Net.Http
                     break;
             }
         }
+
+        public static void Put<TRequest>(this HttpClient httpClient, string requestUri, TRequest content, DataFormat dataFormat,
+           out HttpResponseMessage httpResponseMessage,
+           out string responseString) where TRequest : class
+        {
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+
+            switch (dataFormat)
+            {
+                case DataFormat.Xml:
+                    {
+                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
+                        httpResponseMessage = httpClient.PutAsXmlAsync(requestUri, content).Result;
+                        responseString = httpResponseMessage.Content.ReadAsStringAsync().Result;
+                    }
+                    break;
+                default:
+                    {
+                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                        httpResponseMessage = httpClient.PutAsJsonAsync(requestUri, content).Result;
+                        responseString = httpResponseMessage.Content.ReadAsStringAsync().Result;
+                    }
+                    break;
+            }
+        }
+
+      
     }
 }

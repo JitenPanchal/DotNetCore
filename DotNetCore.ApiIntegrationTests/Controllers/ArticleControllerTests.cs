@@ -176,7 +176,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region Put
 
         [TestMethod]
-        public void Put_Article_Should_Update_Article()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Put_Article_Should_Update_Article(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -188,9 +190,10 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             };
 
             CreateArticle(createArticleRequest,
-            out HttpResponseMessage createHttpResponseMessage,
-            out string createResponseString,
-            out ArticleResponse createArticleResponse);
+                 dataFormat,
+                 out HttpResponseMessage createHttpResponseMessage,
+                 out string createResponseString,
+                 out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -207,7 +210,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Title = GetUniqueStringValue(createArticleRequest.Title)
             };
 
-            UpdateArticle(createArticleResponse.Id, updateArticleRequest, out HttpResponseMessage updateHttpResponseMessage, out string updateResponseString);
+            UpdateArticle(createArticleResponse.Id, updateArticleRequest, dataFormat, out HttpResponseMessage updateHttpResponseMessage, out string updateResponseString);
 
             Assert.AreEqual(HttpStatusCode.NoContent, updateHttpResponseMessage.StatusCode);
 
@@ -227,7 +230,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         }
 
         [TestMethod]
-        public void Put_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_Same_Title()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Put_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_Same_Title(DataFormat dataFormat)
         {
             ArticleResponse CreateArticleRequestAndAssert()
             {
@@ -241,6 +246,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 };
 
                 CreateArticle(createArticleRequest,
+                dataFormat,
                 out HttpResponseMessage createHttpResponseMessage,
                 out string createResponseString,
                 out ArticleResponse createArticleResponse);
@@ -266,12 +272,14 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            UpdateArticle(createArticleResponse2.Id, updateArticleRequest, out HttpResponseMessage updateHttpResponseMessage, out string updateResponseString);
+            UpdateArticle(createArticleResponse2.Id, updateArticleRequest, dataFormat, out HttpResponseMessage updateHttpResponseMessage, out string updateResponseString);
             Assert.AreEqual(HttpStatusCode.BadRequest, updateHttpResponseMessage.StatusCode);
         }
 
         [TestMethod]
-        public void Put_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_Invalid_Data()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Put_Article_Should_Return_BadRequest_Response_When_Creating_Article_With_Invalid_Data(DataFormat dataFormat)
         {
             ArticleResponse CreateArticleRequestAndAssert()
             {
@@ -285,6 +293,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 };
 
                 CreateArticle(createArticleRequest,
+                dataFormat,
                 out HttpResponseMessage createHttpResponseMessage,
                 out string createResponseString,
                 out ArticleResponse createArticleResponse);
@@ -310,7 +319,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            UpdateArticle(createArticleResponse2.Id, updateArticleRequest, out HttpResponseMessage updateHttpResponseMessage, out string updateResponseString);
+            UpdateArticle(createArticleResponse2.Id, updateArticleRequest, dataFormat, out HttpResponseMessage updateHttpResponseMessage, out string updateResponseString);
             Assert.AreEqual(HttpStatusCode.BadRequest, updateHttpResponseMessage.StatusCode);
         }
 
@@ -319,7 +328,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region Delete
 
         [TestMethod]
-        public async Task Delete_Article_Should_Delete()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public async Task Delete_Article_Should_Delete(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -331,9 +342,10 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             };
 
             CreateArticle(createArticleRequest,
-            out HttpResponseMessage createHttpResponseMessage,
-            out string createResponseString,
-            out ArticleResponse createArticleResponse);
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -354,7 +366,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region Publish
 
         [TestMethod]
-        public void Publish_Article_Should_Publish_Article()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Publish_Article_Should_Publish_Article(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -365,7 +379,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -373,7 +391,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
             Assert.IsTrue(createArticleResponse.Id > 1);
 
-            PublishArticle(createArticleResponse.Id, out HttpResponseMessage publishArticleHttpResponseMessage, out string publishArticleResponseString);
+            PublishArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage publishArticleHttpResponseMessage, out string publishArticleResponseString);
             Assert.AreEqual(HttpStatusCode.NoContent, publishArticleHttpResponseMessage.StatusCode);
 
             GetArticle(createArticleResponse.Id,
@@ -393,7 +411,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region UnPublish
 
         [TestMethod]
-        public void UnPublish_Article_Should_UnPublish_Article()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void UnPublish_Article_Should_UnPublish_Article(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -404,7 +424,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -412,7 +436,7 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
             Assert.IsTrue(createArticleResponse.Id > 1);
 
-            UnPublishArticle(createArticleResponse.Id, out HttpResponseMessage publishArticleHttpResponseMessage, out string publishArticleResponseString);
+            UnPublishArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage publishArticleHttpResponseMessage, out string publishArticleResponseString);
             Assert.AreEqual(HttpStatusCode.NoContent, publishArticleHttpResponseMessage.StatusCode);
 
             GetArticle(createArticleResponse.Id,
@@ -432,7 +456,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region Like
 
         [TestMethod]
-        public void Like_Article_Should_Create_ArticleFeedback()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Like_Article_Should_Create_ArticleFeedback(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -443,7 +469,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -451,12 +481,14 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
             Assert.IsTrue(createArticleResponse.Id > 1);
 
-            LikeArticle(createArticleResponse.Id, out HttpResponseMessage likeArticleHttpResponseMessage, out string likeArticleResponseString);
+            LikeArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage likeArticleHttpResponseMessage, out string likeArticleResponseString);
             Assert.AreEqual(HttpStatusCode.NoContent, likeArticleHttpResponseMessage.StatusCode);
         }
 
         [TestMethod]
-        public void Like_Article_When_Called_Multiple_Times_Should_Return_BadRequest()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void Like_Article_When_Called_Multiple_Times_Should_Return_BadRequest(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -467,7 +499,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -477,10 +513,10 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
 
             for (int i = 0; i < 3; i++)
             {
-                LikeArticle(createArticleResponse.Id, out HttpResponseMessage likeArticleHttpResponseMessage, out string likeArticleResponseString);
+                LikeArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage likeArticleHttpResponseMessage, out string likeArticleResponseString);
             }
 
-            LikeArticle(createArticleResponse.Id, out HttpResponseMessage likeArticleHttpResponseMessage2, out string likeArticleResponseString2);
+            LikeArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage likeArticleHttpResponseMessage2, out string likeArticleResponseString2);
             Assert.AreEqual(HttpStatusCode.BadRequest, likeArticleHttpResponseMessage2.StatusCode);
         }
 
@@ -489,7 +525,9 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
         #region UnLike
 
         [TestMethod]
-        public void UnLike_Article_Should_Create_ArticleFeedback()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void UnLike_Article_Should_Create_ArticleFeedback(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -500,7 +538,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -508,12 +550,14 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
             Assert.IsTrue(createArticleResponse.Id > 1);
 
-            UnLikeArticle(createArticleResponse.Id, out HttpResponseMessage unLikeArticleHttpResponseMessage, out string unLikeArticleResponseString);
+            UnLikeArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage unLikeArticleHttpResponseMessage, out string unLikeArticleResponseString);
             Assert.AreEqual(HttpStatusCode.NoContent, unLikeArticleHttpResponseMessage.StatusCode);
         }
 
         [TestMethod]
-        public void UnLike_Article_When_Called_Multiple_Times_Should_Return_BadRequest()
+        [DataRow(DataFormat.Xml)]
+        [DataRow(DataFormat.Json)]
+        public void UnLike_Article_When_Called_Multiple_Times_Should_Return_BadRequest(DataFormat dataFormat)
         {
             var createArticleRequest = new CreateArticleRequest()
             {
@@ -524,7 +568,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 Author = "God",
             };
 
-            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+            CreateArticle(createArticleRequest,
+                dataFormat,
+                out HttpResponseMessage createHttpResponseMessage,
+                out string createResponseString,
+                out ArticleResponse createArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
             Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
@@ -534,10 +582,10 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
 
             for (int i = 0; i < 3; i++)
             {
-                LikeArticle(createArticleResponse.Id, out HttpResponseMessage unLikeArticleHttpResponseMessage, out string unLikeArticleResponseString);
+                LikeArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage unLikeArticleHttpResponseMessage, out string unLikeArticleResponseString);
             }
 
-            LikeArticle(createArticleResponse.Id, out HttpResponseMessage unLikeArticleHttpResponseMessage2, out string unLikeArticleResponseString2);
+            LikeArticle(createArticleResponse.Id, dataFormat, out HttpResponseMessage unLikeArticleHttpResponseMessage2, out string unLikeArticleResponseString2);
             Assert.AreEqual(HttpStatusCode.BadRequest, unLikeArticleHttpResponseMessage2.StatusCode);
         }
 
@@ -557,32 +605,11 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 out createArticleResponse);
         }
 
-        private void CreateArticle(CreateArticleRequest createArticleRequest,
-            out HttpResponseMessage createHttpResponseMessage,
-            out string createResponseString,
-            out ArticleResponse createArticleResponse)
-        {
-            createHttpResponseMessage = Client.PostAsJsonAsync("api/v1/articles", createArticleRequest).Result;
-            createResponseString = createHttpResponseMessage.Content.ReadAsStringAsync().Result;
-            createArticleResponse = JsonConvert.DeserializeObject<ArticleResponse>(createResponseString);
-        }
-
-        private void CreateArticleXml(CreateArticleRequest createArticleRequest,
-            out HttpResponseMessage createHttpResponseMessage,
-            out string createResponseString,
-            out ArticleResponse createArticleResponse)
-        {
-            createHttpResponseMessage = CreateHttpClient(DataFormat.Xml).PostAsXmlAsync("api/v1/articles", createArticleRequest).Result;
-            createResponseString = createHttpResponseMessage.Content.ReadAsStringAsync().Result;
-            createArticleResponse = createResponseString.ToXml<ArticleResponse>();
-        }
-
-        private void UpdateArticle(int articleId, UpdateArticleRequest updateArticleRequest,
+        private void UpdateArticle(int articleId, UpdateArticleRequest updateArticleRequest, DataFormat dataFormat,
             out HttpResponseMessage updateHttpResponseMessage,
             out string updateResponseString)
         {
-            updateHttpResponseMessage = Client.PutAsJsonAsync($"api/v1/articles/{articleId}", updateArticleRequest).Result;
-            updateResponseString = updateHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            CreateHttpClient().Put($"api/v1/articles/{articleId}", updateArticleRequest, dataFormat, out updateHttpResponseMessage, out updateResponseString);
         }
 
         private void GetArticle(int articleId,
@@ -599,32 +626,28 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
                 getArticleResponse = null;
         }
 
-        private void PublishArticle(int articleId, out HttpResponseMessage publishArticleHttpResponseMessage,
+        private void PublishArticle(int articleId, DataFormat dataFormat, out HttpResponseMessage publishArticleHttpResponseMessage,
             out string publishArticleResponseString)
         {
-            publishArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/publish", null).Result;
-            publishArticleResponseString = publishArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            CreateHttpClient().Put<object>($"api/v1/articles/{articleId}/publish", null, dataFormat, out publishArticleHttpResponseMessage, out publishArticleResponseString);
         }
 
-        private void UnPublishArticle(int articleId, out HttpResponseMessage unPublishArticleHttpResponseMessage,
+        private void UnPublishArticle(int articleId, DataFormat dataFormat, out HttpResponseMessage unPublishArticleHttpResponseMessage,
             out string unPublishArticleResponseString)
         {
-            unPublishArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/unpublish", null).Result;
-            unPublishArticleResponseString = unPublishArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            CreateHttpClient().Put<object>($"api/v1/articles/{articleId}/unpublish", null, dataFormat, out unPublishArticleHttpResponseMessage, out unPublishArticleResponseString);
         }
 
-        private void LikeArticle(int articleId, out HttpResponseMessage likeArticleHttpResponseMessage,
+        private void LikeArticle(int articleId, DataFormat dataFormat, out HttpResponseMessage likeArticleHttpResponseMessage,
             out string likeArticleResponseString)
         {
-            likeArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/like", null).Result;
-            likeArticleResponseString = likeArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            CreateHttpClient().Put<object>($"api/v1/articles/{articleId}/like", null, dataFormat, out likeArticleHttpResponseMessage, out likeArticleResponseString);
         }
 
-        private void UnLikeArticle(int articleId, out HttpResponseMessage unLikeArticleHttpResponseMessage,
+        private void UnLikeArticle(int articleId, DataFormat dataFormat, out HttpResponseMessage unLikeArticleHttpResponseMessage,
            out string unLikeArticleResponseString)
         {
-            unLikeArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/unlike", null).Result;
-            unLikeArticleResponseString = unLikeArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            CreateHttpClient().Put<object>($"api/v1/articles/{articleId}/unlike", null, dataFormat, out unLikeArticleHttpResponseMessage, out unLikeArticleResponseString);
         }
 
         #endregion

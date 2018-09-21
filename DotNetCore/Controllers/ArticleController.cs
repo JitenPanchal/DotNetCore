@@ -65,7 +65,7 @@ namespace DotNetCore.Controllers
             return await Delete<Article>(id);
         }
 
-        [HttpPatch]
+        [HttpPut]
         [Route("{id:int}/publish")]
         [Securable("PublishArticle", "Publish Article")]
         public IActionResult PublishArticle(int id)
@@ -74,7 +74,7 @@ namespace DotNetCore.Controllers
             return NoContent();
         }
 
-        [HttpPatch]
+        [HttpPut]
         [Route("{id:int}/unpublish")]
         [Securable("HideArticle", "Hide Article")]
         public IActionResult UnPublishArticle(int id)

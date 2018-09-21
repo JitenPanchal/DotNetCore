@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 namespace DotNetCore.Controllers
 {
     [Route("api/v1/articles/{articleId}")]
-    //[ApiController]
     public class ArticleFeedbackController : BaseController
     {
         private readonly IArticleService articleService;
@@ -24,7 +23,7 @@ namespace DotNetCore.Controllers
             this.mapper = mapper;
         }
 
-        [HttpPatch]
+        [HttpPut]
         [Route("like")]
         public IActionResult LikeArticle(int articleId)
         {
@@ -32,7 +31,7 @@ namespace DotNetCore.Controllers
             return NoContent();
         }
 
-        [HttpPatch]
+        [HttpPut]
         [Route("unlike")]
         public IActionResult UnLikeArticle(int articleId)
         {
