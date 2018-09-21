@@ -154,38 +154,6 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
 
         #region Put
 
-        private void CreateArticle(CreateArticleRequest createArticleRequest,
-            out HttpResponseMessage createHttpResponseMessage,
-            out string createResponseString,
-            out ArticleResponse createArticleResponse)
-        {
-            createHttpResponseMessage = Client.PostAsJsonAsync("api/v1/articles", createArticleRequest).Result;
-            createResponseString = createHttpResponseMessage.Content.ReadAsStringAsync().Result;
-            createArticleResponse = JsonConvert.DeserializeObject<ArticleResponse>(createResponseString);
-        }
-
-        private void UpdateArticle(int articleId, UpdateArticleRequest updateArticleRequest,
-            out HttpResponseMessage updateHttpResponseMessage,
-            out string updateResponseString)
-        {
-            updateHttpResponseMessage = Client.PutAsJsonAsync($"api/v1/articles/{articleId}", updateArticleRequest).Result;
-            updateResponseString = updateHttpResponseMessage.Content.ReadAsStringAsync().Result;
-        }
-
-        private void GetArticle(int articleId,
-            out HttpResponseMessage getHttpResponseMessage,
-            out string getResponseString,
-            out ArticleResponse getArticleResponse)
-        {
-            getHttpResponseMessage = Client.GetAsync($"api/v1/articles/{articleId}").Result;
-            getResponseString = getHttpResponseMessage.Content.ReadAsStringAsync().Result;
-
-            if (getHttpResponseMessage.StatusCode != HttpStatusCode.NotFound)
-                getArticleResponse = JsonConvert.DeserializeObject<ArticleResponse>(getResponseString);
-            else
-                getArticleResponse = null;
-        }
-
         [TestMethod]
         public void Put_Article_Should_Update_Article()
         {
@@ -358,6 +326,134 @@ namespace DotNetCore.ApiIntegrationTests.Controllers
             GetArticle(createArticleResponse.Id, out HttpResponseMessage getHttpResponseMessage, out string getResponseString, out ArticleResponse getArticleResponse);
 
             Assert.AreEqual(HttpStatusCode.NotFound, getHttpResponseMessage.StatusCode);
+        }
+
+        #endregion
+
+        #region Publish
+
+        [TestMethod]
+        public void Publish_Article_Should_Publish_Article()
+        {
+            var createArticleRequest = new CreateArticleRequest()
+            {
+                Title = GetUniqueStringValue("title_"),
+                Body = GetUniqueStringValue("body_"),
+                IsPublished = false,
+                PublishDate = null,
+                Author = "God",
+            };
+
+            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
+
+            PublishArticle(createArticleResponse.Id, out HttpResponseMessage publishArticleHttpResponseMessage, out string publishArticleResponseString);
+            Assert.AreEqual(HttpStatusCode.NoContent, publishArticleHttpResponseMessage.StatusCode);
+
+            GetArticle(createArticleResponse.Id,
+            out HttpResponseMessage getHttpResponseMessage,
+            out string getResponseString,
+            out ArticleResponse getArticleResponse);
+
+            getHttpResponseMessage.EnsureSuccessStatusCode();
+
+            Assert.AreEqual(HttpStatusCode.OK, getHttpResponseMessage.StatusCode);
+            Assert.IsTrue(getArticleResponse.IsPublished);
+            Assert.IsTrue(getArticleResponse.PublishDate.HasValue);
+        }
+
+        #endregion
+
+        #region Publish
+
+        [TestMethod]
+        public void UnPublish_Article_Should_UnPublish_Article()
+        {
+            var createArticleRequest = new CreateArticleRequest()
+            {
+                Title = GetUniqueStringValue("title_"),
+                Body = GetUniqueStringValue("body_"),
+                IsPublished = true,
+                PublishDate = DateTime.UtcNow,
+                Author = "God",
+            };
+
+            CreateArticle(createArticleRequest, out HttpResponseMessage createHttpResponseMessage, out string createResponseString, out ArticleResponse createArticleResponse);
+
+            Assert.AreEqual(HttpStatusCode.Created, createHttpResponseMessage.StatusCode);
+            Assert.AreEqual(createArticleRequest.Title, createArticleResponse.Title);
+            Assert.AreEqual(createArticleRequest.Body, createArticleResponse.Body);
+            Assert.AreEqual(createArticleRequest.Author, createArticleResponse.Author);
+            Assert.IsTrue(createArticleResponse.Id > 1);
+
+            UnPublishArticle(createArticleResponse.Id, out HttpResponseMessage publishArticleHttpResponseMessage, out string publishArticleResponseString);
+            Assert.AreEqual(HttpStatusCode.NoContent, publishArticleHttpResponseMessage.StatusCode);
+
+            GetArticle(createArticleResponse.Id,
+            out HttpResponseMessage getHttpResponseMessage,
+            out string getResponseString,
+            out ArticleResponse getArticleResponse);
+
+            getHttpResponseMessage.EnsureSuccessStatusCode();
+
+            Assert.AreEqual(HttpStatusCode.OK, getHttpResponseMessage.StatusCode);
+            Assert.IsTrue(getArticleResponse.IsPublished == false);
+            Assert.IsTrue(getArticleResponse.PublishDate.HasValue == false);
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private void CreateArticle(CreateArticleRequest createArticleRequest,
+            out HttpResponseMessage createHttpResponseMessage,
+            out string createResponseString,
+            out ArticleResponse createArticleResponse)
+        {
+            createHttpResponseMessage = Client.PostAsJsonAsync("api/v1/articles", createArticleRequest).Result;
+            createResponseString = createHttpResponseMessage.Content.ReadAsStringAsync().Result;
+            createArticleResponse = JsonConvert.DeserializeObject<ArticleResponse>(createResponseString);
+        }
+
+        private void UpdateArticle(int articleId, UpdateArticleRequest updateArticleRequest,
+            out HttpResponseMessage updateHttpResponseMessage,
+            out string updateResponseString)
+        {
+            updateHttpResponseMessage = Client.PutAsJsonAsync($"api/v1/articles/{articleId}", updateArticleRequest).Result;
+            updateResponseString = updateHttpResponseMessage.Content.ReadAsStringAsync().Result;
+        }
+
+        private void GetArticle(int articleId,
+            out HttpResponseMessage getHttpResponseMessage,
+            out string getResponseString,
+            out ArticleResponse getArticleResponse)
+        {
+            getHttpResponseMessage = Client.GetAsync($"api/v1/articles/{articleId}").Result;
+            getResponseString = getHttpResponseMessage.Content.ReadAsStringAsync().Result;
+
+            if (getHttpResponseMessage.StatusCode != HttpStatusCode.NotFound)
+                getArticleResponse = JsonConvert.DeserializeObject<ArticleResponse>(getResponseString);
+            else
+                getArticleResponse = null;
+        }
+
+        private void PublishArticle(int articleId, out HttpResponseMessage publishArticleHttpResponseMessage,
+            out string publishArticleResponseString)
+        {
+            publishArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/publish", null).Result;
+            publishArticleResponseString = publishArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
+        }
+
+        private void UnPublishArticle(int articleId, out HttpResponseMessage unPublishArticleHttpResponseMessage,
+            out string unPublishArticleResponseString)
+        {
+            unPublishArticleHttpResponseMessage = Client.PatchAsync($"api/v1/articles/{articleId}/unpublish", null).Result;
+            unPublishArticleResponseString = unPublishArticleHttpResponseMessage.Content.ReadAsStringAsync().Result;
         }
 
         #endregion

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace DotNetCore.Controllers
 {
     [Route("api/v1/articles")]
-    [ApiController]
+    //[ApiController]
     public class ArticleController : BaseController
     {
         private readonly IArticleService articleService;
@@ -64,8 +64,8 @@ namespace DotNetCore.Controllers
             return await Delete<Article>(id);
         }
 
-        [HttpPut]
-        [Route("{id:int:min(1)}/publish")]
+        [HttpPatch]
+        [Route("{id:int}/publish")]
         [Securable("PublishArticle", "Publish Article")]
         public IActionResult PublishArticle(int id)
         {
@@ -73,8 +73,8 @@ namespace DotNetCore.Controllers
             return NoContent();
         }
 
-        [HttpPut]
-        [Route("{id:int:min(1)}/unpublish")]
+        [HttpPatch]
+        [Route("{id:int}/unpublish")]
         [Securable("HideArticle", "Hide Article")]
         public IActionResult UnPublishArticle(int id)
         {
