@@ -8,8 +8,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Transactions;
+using System.Web;
 
 namespace DotNetCore.ApiIntegrationTests
 {
@@ -100,6 +102,15 @@ namespace DotNetCore.ApiIntegrationTests
             var testProjectPath = AppDomain.CurrentDomain.BaseDirectory;
             var relativePathToHostProject = @"..\..\..\..\..\DotNetCore\DotNetCore";
             return Path.Combine(testProjectPath, relativePathToHostProject);
+        }
+
+        protected static string GetQueryString(object obj)
+        {
+            var properties = from p in obj.GetType().GetProperties()
+                             where p.GetValue(obj, null) != null
+                             select p.Name + "=" + HttpUtility.UrlEncode(p.GetValue(obj, null).ToString());
+
+            return String.Join("&", properties.ToArray());
         }
     }
 }
