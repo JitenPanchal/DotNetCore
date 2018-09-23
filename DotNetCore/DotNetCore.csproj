@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <Folder Include="Database\Validations\" />
-    <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
