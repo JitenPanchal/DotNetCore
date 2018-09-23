@@ -120,7 +120,7 @@ namespace DotNetCore.ApiIntegrationTests
         private static string GetContentRootPath()
         {
             var testProjectPath = AppDomain.CurrentDomain.BaseDirectory;
-            var relativePathToHostProject = @"..\..\..\..\..\DotNetCore\DotNetCore";
+            var relativePathToHostProject = @"..\..\..\..\DotNetCore";
             return Path.Combine(testProjectPath, relativePathToHostProject);
         }
 
